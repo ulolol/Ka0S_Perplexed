@@ -220,12 +220,15 @@
 
         <div class="flex-1 overflow-y-auto p-2 space-y-2">
             <template x-for="chat in history" :key="chat.id">
-                <div @click="loadChat(chat.id)"
-                    class="p-3 rounded-lg cursor-pointer hover:bg-light-border dark:hover:bg-dark-border transition-colors group relative truncate"
-                    :class="{'bg-light-border dark:bg-dark-border': currentChatId === chat.id}">
-                    <span x-text="chat.title || 'New Chat'" class="text-sm font-medium"></span>
+                <div class="relative group">
+                    <div @click="loadChat(chat.id)"
+                        class="p-3 rounded-lg cursor-pointer hover:bg-light-border dark:hover:bg-dark-border transition-colors truncate pr-8"
+                        :class="{'bg-light-border dark:bg-dark-border': currentChatId === chat.id}">
+                        <span x-text="chat.title || 'New Chat'" class="text-sm font-medium"></span>
+                    </div>
                     <button @click.stop="deleteChat(chat.id)"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-opacity">
+                        class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-opacity z-10"
+                        title="Delete chat">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -283,12 +286,13 @@
                         </div>
                     </template>
                 </div>
-            </div>
-            <div class="mt-auto p-4 border-t border-light-border dark:border-dark-border">
-                <button @click="showSettings = true; mobileMenuOpen = false"
-                    class="flex items-center gap-2 w-full p-2 hover:bg-light-border dark:hover:bg-dark-border rounded-lg">
-                    <i data-lucide="settings" class="w-4 h-4"></i> Settings
-                </button>
+                <div class="p-4 border-t border-light-border dark:border-dark-border">
+                    <button @click="showSettings = true; mobileMenuOpen = false"
+                        class="flex items-center gap-2 w-full p-2 hover:bg-light-border dark:hover:bg-dark-border rounded-lg transition-colors text-sm font-medium">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        Settings
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -351,8 +355,8 @@
                                 <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
                                 <span class="text-sm">Thinking...</span>
                             </div>
+                            </div>
                         </div>
-                    </div>
                 </template>
             </div>
         </div>
@@ -366,27 +370,56 @@
                     <textarea x-model="input" @keydown.enter.prevent="if(!$event.shiftKey) sendMessage()"
                         placeholder="Ask anything..."
                         class="w-full bg-transparent border-none focus:ring-0 resize-none max-h-48 min-h-[50px] p-2 text-base"
-                        rows="1" x-ref="inputArea"
-                        @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"></textarea>
-
-                    <div class="flex items-center justify-between px-2 pb-1 mt-2">
-                        <div class="flex items-center gap-2">
-                            <div class="relative" x-data="{ open: false }">
-                                <button @click="open = !open"
-                                    class="flex items-center gap-1 text-xs font-medium bg-light-bg dark:bg-dark-bg px-2 py-1 rounded-md border border-light-border dark:border-dark-border hover:bg-light-border dark:hover:bg-dark-border transition-colors">
-                                    <span x-text="focusMode"></span>
-                                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                                </button>
-                                <div x-show="open" @click.outside="open = false"
-                                    class="absolute bottom-full left-0 mb-2 w-48 bg-light-secondary dark:bg-dark-secondary border border-light-border dark:border-dark-border rounded-lg shadow-xl overflow-hidden z-50">
-                                    <template x-for="mode in focusModes" :key="mode">
-                                        <button @click="focusMode = mode; open = false"
-                                            class="w-full text-left px-4 py-2 text-sm hover:bg-light-border dark:hover:bg-dark-border transition-colors"
-                                            x-text="mode"></button>
-                                    </template>
-                                </div>
+                            rows="1" x-ref="inputArea"
+                            @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"></textarea>
+ 
+                        <!-- Attached Files Preview -->
+                            <div x-show="filePreviews.length" class="mt-2 px-1 space-y-1 max-h-24 overflow-y-auto">
+                                <template x-for="preview in filePreviews" :key="preview.id">
+                                    <div class="flex items-center gap-2 p-2 bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-lg">
+                                        <template x-if="preview.type?.startsWith('image/')">
+                                            <img :src="'data:' + preview.type + ';base64,' + preview.data" class="w-8 h-8 object-cover rounded" :alt="preview.name">
+                                        </template>
+                                        <template x-else>
+                                            <div class="w-8 h-8 bg-light-border dark:bg-dark-border rounded flex items-center justify-center">
+                                                <i data-lucide="file-text" class="w-4 h-4 text-light-muted dark:text-dark-muted"></i>
+                                            </div>
+                                        </template>
+                                        <span class="text-xs flex-1 min-w-0 truncate font-medium" x-text="preview.name"></span>
+                                        <span class="text-xs text-light-muted dark:text-dark-muted" x-text="(preview.size / 1024).toFixed(1) + ' KB'"></span>
+                                        <button @click="removeFile(preview.id)" class="ml-1 p-1 hover:bg-light-border dark:hover:bg-dark-border rounded text-light-muted dark:text-dark-muted hover:text-red-500">
+                                            <i data-lucide="x" class="w-3 h-3"></i>
+                                        </button>
+                                    </div>
+                                </template>
                             </div>
-                        </div>
+ 
+                        <div class="flex items-center justify-between px-2 pb-1 mt-2">
+                            <div class="flex items-center gap-2">
+                                <div class="relative" x-data="{ open: false }">
+                                    <button @click="open = !open"
+                                        class="flex items-center gap-1 text-xs font-medium bg-light-bg dark:bg-dark-bg px-2 py-1 rounded-md border border-light-border dark:border-dark-border hover:bg-light-border dark:hover:bg-dark-border transition-colors">
+                                        <span x-text="focusMode"></span>
+                                        <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                                    </button>
+                                    <div x-show="open" @click.outside="open = false"
+                                        class="absolute bottom-full left-0 mb-2 w-48 bg-light-secondary dark:bg-dark-secondary border border-light-border dark:border-dark-border rounded-lg shadow-xl overflow-hidden z-50">
+                                        <template x-for="mode in focusModes" :key="mode">
+                                            <button @click="focusMode = mode; open = false"
+                                                class="w-full text-left px-4 py-2 text-sm hover:bg-light-border dark:hover:bg-dark-border transition-colors"
+                                                x-text="mode"></button>
+                                        </template>
+                                    </div>
+                                </div>
+                                <!-- File Upload -->
+                                <button type="button" @click="$refs.fileInput?.click()"
+                                    class="p-1.5 text-light-muted dark:text-dark-muted hover:bg-light-border dark:hover:bg-dark-border rounded transition-colors flex items-center gap-1"
+                                    :title="selectedFiles.length ? (selectedFiles.length + ' file' + (selectedFiles.length > 1 ? 's' : '') + ' selected') : 'Attach files/images'">
+                                    <i data-lucide="paperclip" class="w-4 h-4"></i>
+                                    <span x-show="selectedFiles.length" class="text-xs bg-accent text-white px-1.5 py-0.5 rounded-full" x-text="selectedFiles.length"></span>
+                                </button>
+                                <input x-ref="fileInput" type="file" multiple accept="image/*,application/pdf,text/plain,.txt,.md,application/json,video/*" @change="handleFiles($event)" class="hidden">
+                            </div>
                         <button @click="sendMessage()" :disabled="!input.trim() || isLoading"
                             class="p-2 bg-accent text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                             <i data-lucide="arrow-up" class="w-4 h-4"></i>
@@ -470,6 +503,8 @@
                 mobileMenuOpen: false,
                 focusMode: 'All',
                 focusModes: ['All', 'Academic', 'YouTube', 'Reddit', 'Writing Assistant', 'Wolfram Alpha'],
+                selectedFiles: [],
+                filePreviews: [],
                 apiKeys: {
                     tavily: '',
                     gemini: ''
@@ -486,6 +521,20 @@
                     const savedKeys = localStorage.getItem('perplexica.keys');
                     if (savedKeys) {
                         this.apiKeys = JSON.parse(savedKeys);
+                    }
+                    // Auto-load from api-keys-example.json (only if not opened via file://)
+                    if (!location.protocol.startsWith('file')) {
+                        fetch('./api-keys-example.json')
+                            .then(r => r.ok ? r.json() : null)
+                            .then(data => {
+                                if (data) {
+                                    Object.assign(this.apiKeys, data);
+                                    localStorage.setItem('perplexica.keys', JSON.stringify(this.apiKeys));
+                                }
+                            })
+                            .catch(e => {
+                                // Silently ignore errors (file may not exist or network issues)
+                            });
                     }
 
                     // Load History
@@ -599,6 +648,66 @@
                     localStorage.setItem('perplexica.history', JSON.stringify(this.history));
                 },
 
+                // File handling methods
+                async handleFiles(event) {
+                    const files = Array.from(event.target.files);
+                    const newFiles = [];
+                    const newPreviews = [];
+                    for (let i = 0; i < files.length && newFiles.length < 5; i++) {
+                        const file = files[i];
+                        if (file.size > 8 * 1024 * 1024) continue; // 8MB limit
+                        let processed = null;
+                        if (file.type.startsWith('image/') || file.type === 'application/pdf' || file.type.startsWith('video/')) {
+                            try {
+                                const base64 = await this.fileToBase64(file);
+                                processed = {
+                                    id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                    name: file.name,
+                                    type: file.type,
+                                    data: base64,
+                                    content: null,
+                                    size: file.size
+                                };
+                            } catch (e) {
+                                console.warn('Failed to read file:', file.name, e);
+                            }
+                        } else {
+                            try {
+                                const content = await file.text();
+                                processed = {
+                                    id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                    name: file.name,
+                                    type: file.type,
+                                    data: null,
+                                    content: content.slice(0, 20000), // 20k chars max
+                                    size: file.size
+                                };
+                            } catch (e) {
+                                console.warn('Failed to read text file:', file.name, e);
+                            }
+                        }
+                        if (processed) {
+                            newFiles.push(processed);
+                            newPreviews.push({...processed, type: processed.type || 'text'});
+                        }
+                    }
+                    this.selectedFiles = newFiles;
+                    this.filePreviews = newPreviews;
+                    event.target.value = '';
+                },
+                fileToBase64(file) {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.onerror = () => reject(new Error('Failed to read file'));
+                        reader.readAsDataURL(file);
+                    });
+                },
+                removeFile(id) {
+                    this.selectedFiles = this.selectedFiles.filter(f => f.id !== id);
+                    this.filePreviews = this.filePreviews.filter(p => p.id !== id);
+                },
+
                 // Messaging Logic
                 async sendMessage() {
                     if (!this.input.trim() || this.isLoading) return;
@@ -637,60 +746,125 @@
                         let sources = [];
                         let prompt = '';
 
+                        // Build conversation history (excluding current user message which hasn't been added yet)
+                        let conversationHistory = '';
+                        if (this.messages.length > 1) {
+                            // Include all messages except the last one (current user message)
+                            for (let i = 0; i < this.messages.length - 1; i++) {
+                                const msg = this.messages[i];
+                                if (msg.role === 'user') {
+                                    conversationHistory += `\nUser: ${msg.content}\n`;
+                                } else if (msg.role === 'assistant') {
+                                    // Truncate long responses for context
+                                    const content = msg.content.slice(0, 500) + (msg.content.length > 500 ? '...' : '');
+                                    conversationHistory += `Assistant: ${content}\n`;
+                                }
+                            }
+                        }
+
                         // 1. Search (if not Writing Assistant)
                         if (this.focusMode !== 'Writing Assistant' && this.apiKeys.tavily) {
-                            const searchResults = await this.searchTavily(userQuery);
-                            sources = searchResults.results.map(r => ({
-                                title: r.title,
-                                url: r.url,
-                                content: r.content
-                            }));
+                            try {
+                                const searchResults = await this.searchTavily(userQuery);
+                                if (searchResults && searchResults.results && Array.isArray(searchResults.results)) {
+                                    sources = searchResults.results.map(r => ({
+                                        title: r.title || 'Untitled',
+                                        url: r.url || '',
+                                        content: r.content || ''
+                                    }));
+                                } else {
+                                    throw new Error('Unexpected search results format');
+                                }
 
-                            // Update UI with sources
-                            this.messages[assistantMsgIndex].sources = sources;
+                                // Update UI with sources
+                                this.messages[assistantMsgIndex].sources = sources;
+                            } catch (searchError) {
+                                console.warn('Tavily search failed, continuing without sources:', searchError);
+                                this.messages[assistantMsgIndex].sources = [];
+                            }
 
                             // Construct Prompt with context
-                            const contextStr = sources.map((s, i) => `[${i + 1}] Title: ${s.title}\nURL: ${s.url}\nContent: ${s.content}`).join('\n\n');
-                            prompt = `You are Ka0S_Perplexed, an AI search engine. Answer the query based on the context provided.
-                            
-Query: ${userQuery}
+                            const contextStr = sources.map((s, i) => `[${i + 1}] Title: ${s.title}\nURL: ${s.url}\nContent: ${s.content.slice(0, 2000)}`).join('\n\n');
+                            prompt = `You are Ka0S_Perplexed, an AI search engine. Answer queries based on the provided context.${conversationHistory ? '\n\nConversation History:' + conversationHistory : ''}
+
+Current Query: ${userQuery}
 
 Context:
 ${contextStr}
 
 Instructions:
 - Answer the user's query comprehensively using the provided context.
-- Cite your sources using [1], [2] notation inline.
-- Use Markdown for formatting.
+- Reference previous conversation if relevant to provide continuity.
+- Cite your sources using [1], [2] notation inline within your answer.
+- Use Markdown for formatting (bold, italics, lists, etc.).
+- Do NOT list or enumerate the sources at the beginning or end - they are shown separately.
+- Do NOT repeat the context information - synthesize and answer the question.
 - If the context doesn't contain the answer, say so, but try to answer from your general knowledge if appropriate (and note that it's general knowledge).
 - Provide a detailed and in-depth response. Do not limit the length if the topic requires thorough explanation.
 `;
                         } else {
                             // Direct Chat Prompt
-                            prompt = `You are Ka0S_Perplexed, a helpful AI assistant.
-                            
-Query: ${userQuery}
+                            prompt = `You are Ka0S_Perplexed, a helpful AI assistant.${conversationHistory ? '\n\nConversation History:' + conversationHistory : ''}
+
+Current Query: ${userQuery}
 
 Instructions:
 - Answer the user's query helpfully.
+- Reference previous conversation if relevant to provide continuity.
 - Use Markdown for formatting.
 `;
+
+                        }
+ 
+                        // Process attached files
+                        let parts = [];
+                        if (this.selectedFiles.length > 0) {
+                            let fileSummary = '\n\n**Attached files:**\n';
+                            for (let file of this.selectedFiles) {
+                                if (file.content) {
+                                    // Append text content to prompt
+                                    prompt += `\n\n--- Content of ${file.name} (text file) ---\n${file.content.slice(0, 15000)}`;
+                                    fileSummary += `- ${file.name} (text, ${Math.round(file.size/1024)}KB)\n`;
+                                } else if (file.data) {
+                                    // Add as inline data for vision/multimodal
+                                    parts.push({
+                                        inline_data: {
+                                            mime_type: file.type,
+                                            data: file.data
+                                        }
+                                    });
+                                    fileSummary += `- ${file.name} (image/file, ${Math.round(file.size/1024)}KB)\n`;
+                                }
+                            }
+                            prompt = `Analyze any attached files as needed, then answer the query.${fileSummary}\n\n${prompt}`;
                         }
 
+                        // Add the prompt as the first part
+                        parts.unshift({ text: prompt });
+
                         // 2. Stream Gemini Response
-                        await this.streamGemini(prompt, (chunk) => {
+                        const initialLength = this.messages[assistantMsgIndex].content.length;
+                        await this.streamGemini(parts, (chunk) => {
                             this.messages[assistantMsgIndex].content += chunk;
                             // Scroll to bottom
                             const container = document.getElementById('chat-container');
                             container.scrollTop = container.scrollHeight;
                         });
 
+                        // Validate we received content
+                        if (this.messages[assistantMsgIndex].content.length === initialLength) {
+                            throw new Error('No response received from Gemini API. Check your API key and try again.');
+                        }
+
                     } catch (error) {
-                        console.error(error);
+                        console.error('Error in sendMessage:', error);
                         this.messages[assistantMsgIndex].content += `\n\n**Error:** ${error.message}`;
                     } finally {
                         this.messages[assistantMsgIndex].loading = false;
                         this.isLoading = false;
+                        // Clear attached files after send
+                        this.selectedFiles = [];
+                        this.filePreviews = [];
                         this.saveHistory();
                     }
                 },
@@ -734,7 +908,7 @@ Instructions:
                     return await response.json();
                 },
 
-                async streamGemini(prompt, onChunk) {
+                async streamGemini(parts, onChunk) {
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${this.apiKeys.gemini}`;
 
                     const response = await fetch(url, {
@@ -744,13 +918,39 @@ Instructions:
                         },
                         body: JSON.stringify({
                             contents: [{
-                                parts: [{ text: prompt }]
-                            }]
+                                parts
+                            }],
+                            generationConfig: {
+                                temperature: 0.3,
+                                topP: 0.95,
+                                topK: 64,
+                                maxOutputTokens: 8192,
+                                responseMimeType: 'text/plain'
+                            },
+                            safetySettings: [
+                                {
+                                    category: 'HARM_CATEGORY_HARASSMENT',
+                                    threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+                                },
+                                {
+                                    category: 'HARM_CATEGORY_HATE_SPEECH',
+                                    threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+                                },
+                                {
+                                    category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                                    threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+                                },
+                                {
+                                    category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                                    threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+                                }
+                            ]
                         })
                     });
 
                     if (!response.ok) {
-                        throw new Error('Gemini API failed');
+                        const errorText = await response.text();
+                        throw new Error(`Gemini API failed: ${response.status} ${response.statusText} - ${errorText}`);
                     }
 
                     const reader = response.body.getReader();
@@ -764,47 +964,38 @@ Instructions:
                         const chunk = decoder.decode(value, { stream: true });
                         buffer += chunk;
 
-                        // Parse JSON objects from the stream (Gemini sends multiple JSON objects)
-                        // This is a simplified parser for the stream format
-                        // In a real app, we might need a more robust parser or use the official SDK
-                        // But for single file, we'll do manual parsing
-
-                        // Gemini stream returns array of objects like [{...}, {...}] or just {...}
-                        // We need to extract 'text' from candidates[0].content.parts[0].text
-
-                        // Hacky split by '}\n,' or similar to handle multiple JSONs in one chunk if needed
-                        // But usually we can just accumulate and try to parse if it's a valid JSON array or object
-
-                        // Actually, the raw stream from REST API is a JSON array that gets built up? 
-                        // No, it sends "data: " events or just a JSON array?
-                        // Let's assume standard REST stream behavior: it sends a JSON array `[` then objects `, { ... }` then `]`
-
-                        // To make it robust without a complex parser, let's just regex for the text parts
-                        // This is fragile but works for a single-file prototype without dependencies
-
-                        const regex = /"text":\s*"((?:[^"\\]|\\.)*)"/g;
+                        // Regex patterns to match text from Gemini stream responses
+                        // Matches: "text": "actual text content"
+                        // Handles escaped characters within the text
+                        const textRegex = /"text"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
                         let match;
-                        while ((match = regex.exec(chunk)) !== null) {
-                            let text = match[1];
-                            // Unescape JSON string
-                            text = JSON.parse(`"${text}"`);
-                            onChunk(text);
+
+                        while ((match = textRegex.exec(chunk)) !== null) {
+                            try {
+                                // Unescape the captured text
+                                const escapedText = match[1];
+                                const text = JSON.parse(`"${escapedText}"`);
+                                if (text && text.trim()) {
+                                    onChunk(text);
+                                }
+                            } catch (e) {
+                                console.warn('Text extraction error:', e.message);
+                            }
                         }
                     }
                 },
 
                 // Markdown Rendering
                 renderMarkdown(text) {
-                    // Pre-process citations [1] -> <a ...>[1]</a>
-                    // This is tricky inside markdown, so we'll let marked parse it, then post-process or use a marked extension
-                    // For simplicity, let's just use marked and handle citations visually in the text if they are standard markdown links
-                    // Or we can replace [1] with a custom span before passing to marked
+                    // Parse markdown first
+                    const rawHtml = marked.parse(text);
 
-                    // Simple replacement for [n] to make them stand out
-                    const textWithCitations = text.replace(/\[(\d+)\]/g, '<sup class="citation-link" title="Source $1">$1</sup>');
+                    // Post-process citations [1] -> <a ...>[1]</a>
+                    // This must happen after markdown parsing to avoid markdown escaping the HTML
+                    const sanitized = DOMPurify.sanitize(rawHtml);
+                    const withCitations = sanitized.replace(/\[(\d+)\]/g, '<a href="#source-$1" class="citation-link" title="Source $1">$1</a>');
 
-                    const rawHtml = marked.parse(textWithCitations);
-                    return DOMPurify.sanitize(rawHtml);
+                    return withCitations;
                 }
             }
         }
