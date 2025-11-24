@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ka0S_Perplexed</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌀</text></svg>">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#18181b', // zinc-900
+                            secondary: '#27272a', // zinc-800
+                            text: '#f4f4f5', // zinc-100
+                            muted: '#a1a1aa', // zinc-400
+                            border: '#3f3f46', // zinc-700
+                        },
+                        light: {
+                            bg: '#ffffff',
+                            secondary: '#f4f4f5', // zinc-100
+                            text: '#18181b', // zinc-900
+                            muted: '#71717a', // zinc-500
+                            border: '#e4e4e7', // zinc-200
+                        },
+                        accent: '#24A0ED',
+                    },
+                    typography: (theme) => ({
+                        DEFAULT: {
+                            css: {
+                                color: theme('colors.gray.700'),
+                                a: {
+                                    color: theme('colors.blue.500'),
+                                    '&:hover': {
+                                        color: theme('colors.blue.700'),
+                                    },
+                                },
+                            },
+                        },
+                        dark: {
+                            css: {
+                                color: theme('colors.gray.300'),
+                                a: {
+                                    color: theme('colors.blue.400'),
+                                    '&:hover': {
+                                        color: theme('colors.blue.600'),
+                                    },
+                                },
+                            },
+                        },
+                    }),
+                },
+            },
+        }
+    </script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Marked.js for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- DOMPurify -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #52525b;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #71717a;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* Markdown Styles */
+        .prose p {
+            margin-bottom: 1em;
+        }
+
+        .prose ul {
+            list-style-type: disc;
+            padding-left: 1.5em;
+            margin-bottom: 1em;
+        }
+
+        .prose ol {
+            list-style-type: decimal;
+            padding-left: 1.5em;
+            margin-bottom: 1em;
+        }
+
+        .prose h1,
+        .prose h2,
+        .prose h3 {
+            font-weight: bold;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .prose h1 {
+            font-size: 1.5em;
+        }
+
+        .prose h2 {
+            font-size: 1.25em;
+        }
+
+        .prose h3 {
+            font-size: 1.1em;
+        }
+
+        .prose code {
+            background-color: rgba(128, 128, 128, 0.2);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .prose pre {
+            background-color: #27272a;
+            padding: 1em;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1em;
+        }
+
+        .prose pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+
+        .prose blockquote {
+            border-left: 4px solid #3f3f46;
+            padding-left: 1em;
+            font-style: italic;
+            margin-bottom: 1em;
+        }
+
+        /* Citation Styles */
+        .citation-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.2em;
+            height: 1.2em;
+            border-radius: 50%;
+            background-color: #3f3f46;
+            color: #e4e4e7;
+            font-size: 0.75em;
+            margin-left: 0.2em;
+            text-decoration: none;
+            vertical-align: super;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .citation-link:hover {
+            background-color: #24A0ED;
+            color: white;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text h-screen flex overflow-hidden font-sans selection:bg-accent selection:text-white"
+    x-data="app()" x-init="initApp()">
+
+    <!-- Sidebar -->
+    <aside
+        class="w-64 bg-light-secondary dark:bg-dark-secondary border-r border-light-border dark:border-dark-border flex-col hidden md:flex transition-colors duration-300">
+        <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center gap-2 font-bold text-xl">
+                <i data-lucide="layers" class="text-accent"></i>
+                <span>Ka0S_Perplexed</span>
+            </div>
+            <button @click="startNewChat()"
+                class="p-2 hover:bg-light-border dark:hover:bg-dark-border rounded-lg transition-colors"
+                title="New Chat">
+                <i data-lucide="plus-square"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-2 space-y-2">
+            <template x-for="chat in history" :key="chat.id">
+                <div @click="loadChat(chat.id)"
+                    class="p-3 rounded-lg cursor-pointer hover:bg-light-border dark:hover:bg-dark-border transition-colors group relative truncate"
+                    :class="{'bg-light-border dark:bg-dark-border': currentChatId === chat.id}">
+                    <span x-text="chat.title || 'New Chat'" class="text-sm font-medium"></span>
+                    <button @click.stop="deleteChat(chat.id)"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-opacity">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </template>
+        </div>
+
+        <div class="p-4 border-t border-light-border dark:border-dark-border">
+            <button @click="showSettings = true"
+                class="flex items-center gap-2 w-full p-2 hover:bg-light-border dark:hover:bg-dark-border rounded-lg transition-colors text-sm font-medium">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+                Settings
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative">
+        <!-- Mobile Header -->
+        <header
+            class="md:hidden flex items-center justify-between p-4 border-b border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg z-10">
+            <div class="flex items-center gap-2 font-bold">
+                <i data-lucide="layers" class="text-accent"></i>
+                <span>Ka0S_Perplexed</span>
+            </div>
+            <button @click="mobileMenuOpen = !mobileMenuOpen" class="p-2">
+                <i data-lucide="menu"></i>
+            </button>
+        </header>
+
+        <!-- Mobile Menu -->
+        <div x-show="mobileMenuOpen" class="absolute inset-0 bg-black/50 z-40 md:hidden" @click="mobileMenuOpen = false"
+            x-transition.opacity>
+        </div>
+        <div x-show="mobileMenuOpen"
+            class="absolute inset-y-0 left-0 w-64 bg-light-secondary dark:bg-dark-secondary z-50 transform transition-transform md:hidden flex flex-col"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="-translate-x-full"
+            x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full">
+            <!-- Mobile Sidebar Content (Clone of Desktop) -->
+            <div class="p-4 flex items-center justify-between border-b border-light-border dark:border-dark-border">
+                <span class="font-bold">Menu</span>
+                <button @click="mobileMenuOpen = false"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-4">
+                <button @click="startNewChat(); mobileMenuOpen = false"
+                    class="w-full flex items-center gap-2 p-3 bg-accent text-white rounded-lg mb-4">
+                    <i data-lucide="plus"></i> New Chat
+                </button>
+                <div class="space-y-2 overflow-y-auto max-h-[60vh]">
+                    <template x-for="chat in history" :key="chat.id">
+                        <div @click="loadChat(chat.id); mobileMenuOpen = false"
+                            class="p-3 rounded-lg cursor-pointer hover:bg-light-border dark:hover:bg-dark-border truncate text-sm"
+                            :class="{'bg-light-border dark:bg-dark-border': currentChatId === chat.id}">
+                            <span x-text="chat.title || 'New Chat'"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            <div class="mt-auto p-4 border-t border-light-border dark:border-dark-border">
+                <button @click="showSettings = true; mobileMenuOpen = false"
+                    class="flex items-center gap-2 w-full p-2 hover:bg-light-border dark:hover:bg-dark-border rounded-lg">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Settings
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth" id="chat-container">
+            <div class="max-w-3xl mx-auto space-y-8 pb-32">
+
+                <!-- Welcome Screen -->
+                <div x-show="messages.length === 0"
+                    class="flex flex-col items-center justify-center h-[60vh] text-center space-y-6 animate-fade-in">
+                    <div class="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mb-4">
+                        <i data-lucide="layers" class="w-8 h-8 text-accent"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold">Where knowledge begins</h1>
+                    <p class="text-light-muted dark:text-dark-muted max-w-md">
+                        Ask anything. Ka0S_Perplexed searches the web and uses Gemini to give you a comprehensive answer
+                        with citations.
+                    </p>
+                </div>
+
+                <!-- Messages -->
+                <template x-for="(msg, index) in messages" :key="index">
+                    <div class="animate-fade-in space-y-4">
+                        <!-- User Message -->
+                        <div x-show="msg.role === 'user'" class="flex flex-col space-y-2">
+                            <h2 class="text-2xl font-medium" x-text="msg.content"></h2>
+                        </div>
+
+                        <!-- Assistant Message -->
+                        <div x-show="msg.role === 'assistant'" class="flex flex-col space-y-6">
+
+                            <!-- Sources Grid -->
+                            <div x-show="msg.sources && msg.sources.length > 0"
+                                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                <template x-for="(source, idx) in (msg.sources || []).slice(0, 7)" :key="idx">
+                                    <a :href="source.url" target="_blank"
+                                        class="block p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-border dark:hover:bg-dark-border transition-colors text-xs border border-light-border dark:border-dark-border truncate group">
+                                        <div class="font-medium mb-1 truncate" x-text="source.title"></div>
+                                        <div class="flex items-center gap-1 text-light-muted dark:text-dark-muted">
+                                            <div class="w-4 h-4 rounded-full bg-light-border dark:bg-dark-border flex items-center justify-center text-[10px]"
+                                                x-text="idx + 1"></div>
+                                            <span class="truncate" x-text="new URL(source.url).hostname"></span>
+                                        </div>
+                                    </a>
+                                </template>
+                            </div>
+
+                            <!-- Answer Content -->
+                            <div class="flex gap-4">
+                                <div class="flex-shrink-0 mt-1">
+                                    <i data-lucide="sparkles" class="w-5 h-5 text-accent"></i>
+                                </div>
+                                <div class="prose dark:prose-invert max-w-none w-full"
+                                    x-html="renderMarkdown(msg.content)"></div>
+                            </div>
+
+                            <!-- Loading Indicator -->
+                            <div x-show="msg.loading"
+                                class="flex items-center gap-2 text-light-muted dark:text-dark-muted ml-9">
+                                <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                                <span class="text-sm">Thinking...</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div
+            class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-light-bg dark:from-dark-bg via-light-bg dark:via-dark-bg to-transparent pt-10 pb-6 px-4 z-20">
+            <div class="max-w-3xl mx-auto">
+                <div
+                    class="bg-light-secondary dark:bg-dark-secondary border border-light-border dark:border-dark-border rounded-2xl shadow-lg p-2 focus-within:ring-2 focus-within:ring-accent/50 transition-all">
+                    <textarea x-model="input" @keydown.enter.prevent="if(!$event.shiftKey) sendMessage()"
+                        placeholder="Ask anything..."
+                        class="w-full bg-transparent border-none focus:ring-0 resize-none max-h-48 min-h-[50px] p-2 text-base"
+                        rows="1" x-ref="inputArea"
+                        @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"></textarea>
+
+                    <div class="flex items-center justify-between px-2 pb-1 mt-2">
+                        <div class="flex items-center gap-2">
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open"
+                                    class="flex items-center gap-1 text-xs font-medium bg-light-bg dark:bg-dark-bg px-2 py-1 rounded-md border border-light-border dark:border-dark-border hover:bg-light-border dark:hover:bg-dark-border transition-colors">
+                                    <span x-text="focusMode"></span>
+                                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                                </button>
+                                <div x-show="open" @click.outside="open = false"
+                                    class="absolute bottom-full left-0 mb-2 w-48 bg-light-secondary dark:bg-dark-secondary border border-light-border dark:border-dark-border rounded-lg shadow-xl overflow-hidden z-50">
+                                    <template x-for="mode in focusModes" :key="mode">
+                                        <button @click="focusMode = mode; open = false"
+                                            class="w-full text-left px-4 py-2 text-sm hover:bg-light-border dark:hover:bg-dark-border transition-colors"
+                                            x-text="mode"></button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                        <button @click="sendMessage()" :disabled="!input.trim() || isLoading"
+                            class="p-2 bg-accent text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                            <i data-lucide="arrow-up" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-center mt-2 text-xs text-light-muted dark:text-dark-muted">
+                    Powered by Tavily & Gemini • Local Storage Only
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div x-show="showSettings" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+        x-transition.opacity>
+        <div class="bg-light-bg dark:bg-dark-bg w-full max-w-md rounded-xl shadow-2xl border border-light-border dark:border-dark-border overflow-hidden"
+            @click.outside="showSettings = false">
+            <div class="p-4 border-b border-light-border dark:border-dark-border flex items-center justify-between">
+                <h2 class="font-bold text-lg">Settings</h2>
+                <button @click="showSettings = false"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 space-y-6">
+                <!-- Theme Toggle -->
+                <div class="flex items-center justify-between">
+                    <span class="font-medium">Dark Mode</span>
+                    <button @click="toggleTheme()"
+                        class="w-12 h-6 rounded-full bg-light-border dark:bg-dark-border relative transition-colors">
+                        <div class="w-4 h-4 bg-white rounded-full absolute top-1 transition-transform duration-200"
+                            :class="isDark ? 'left-7' : 'left-1'"></div>
+                    </button>
+                </div>
+
+                <!-- API Keys -->
+                <div class="space-y-4">
+                    <h3 class="font-medium text-sm text-light-muted dark:text-dark-muted uppercase tracking-wider">API
+                        Keys</h3>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">Tavily API Key</label>
+                        <input type="password" x-model="apiKeys.tavily"
+                            class="w-full bg-light-secondary dark:bg-dark-secondary border border-light-border dark:border-dark-border rounded-lg p-2 text-sm focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
+                            placeholder="tvly-...">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">Gemini API Key</label>
+                        <input type="password" x-model="apiKeys.gemini"
+                            class="w-full bg-light-secondary dark:bg-dark-secondary border border-light-border dark:border-dark-border rounded-lg p-2 text-sm focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
+                            placeholder="AIza...">
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="text-xs text-accent hover:underline cursor-pointer">
+                            Load from api-keys-example.json
+                            <input type="file" accept=".json" @change="loadKeysFromFile($event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div
+                class="p-4 border-t border-light-border dark:border-dark-border bg-light-secondary dark:bg-dark-secondary flex justify-end">
+                <button @click="saveSettings()"
+                    class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium">Save
+                    & Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function app() {
+            return {
+                // State
+                history: [],
+                messages: [],
+                currentChatId: null,
+                input: '',
+                isLoading: false,
+                isDark: true,
+                showSettings: false,
+                mobileMenuOpen: false,
+                focusMode: 'All',
+                focusModes: ['All', 'Academic', 'YouTube', 'Reddit', 'Writing Assistant', 'Wolfram Alpha'],
+                apiKeys: {
+                    tavily: '',
+                    gemini: ''
+                },
+
+                // Initialization
+                initApp() {
+                    // Load Theme
+                    const savedTheme = localStorage.getItem('perplexica.theme');
+                    this.isDark = savedTheme ? savedTheme === 'dark' : true;
+                    this.applyTheme();
+
+                    // Load Keys
+                    const savedKeys = localStorage.getItem('perplexica.keys');
+                    if (savedKeys) {
+                        this.apiKeys = JSON.parse(savedKeys);
+                    }
+
+                    // Load History
+                    const savedHistory = localStorage.getItem('perplexica.history');
+                    if (savedHistory) {
+                        this.history = JSON.parse(savedHistory);
+                    }
+
+                    // Initialize Icons
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                    });
+
+                    // Start new chat if empty
+                    if (this.history.length === 0) {
+                        this.startNewChat();
+                    } else {
+                        // Load most recent
+                        this.loadChat(this.history[0].id);
+                    }
+                },
+
+                // Theme Logic
+                toggleTheme() {
+                    this.isDark = !this.isDark;
+                    this.applyTheme();
+                    localStorage.setItem('perplexica.theme', this.isDark ? 'dark' : 'light');
+                },
+                applyTheme() {
+                    if (this.isDark) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+
+                // Settings Logic
+                saveSettings() {
+                    localStorage.setItem('perplexica.keys', JSON.stringify(this.apiKeys));
+                    this.showSettings = false;
+                },
+                async loadKeysFromFile(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    try {
+                        const text = await file.text();
+                        const data = JSON.parse(text);
+                        if (data.tavily || data.gemini) {
+                            this.apiKeys = { ...this.apiKeys, ...data };
+                            alert('Keys loaded! Click Save to persist.');
+                        } else {
+                            throw new Error('Invalid JSON format');
+                        }
+                    } catch (e) {
+                        alert('Error loading file: ' + e.message);
+                    }
+                    // Reset input
+                    event.target.value = '';
+                },
+
+                // Chat Management
+                startNewChat() {
+                    const newChat = {
+                        id: Date.now().toString(),
+                        title: 'New Chat',
+                        messages: [],
+                        timestamp: Date.now()
+                    };
+                    this.history.unshift(newChat);
+                    this.currentChatId = newChat.id;
+                    this.messages = [];
+                    this.saveHistory();
+                },
+                loadChat(id) {
+                    const chat = this.history.find(c => c.id === id);
+                    if (chat) {
+                        this.currentChatId = id;
+                        this.messages = chat.messages.map(m => ({
+                            ...m,
+                            sources: m.sources || []
+                        }));
+                        // Scroll to bottom
+                        this.$nextTick(() => {
+                            const container = document.getElementById('chat-container');
+                            container.scrollTop = container.scrollHeight;
+                        });
+                    }
+                },
+                deleteChat(id) {
+                    this.history = this.history.filter(c => c.id !== id);
+                    if (this.currentChatId === id) {
+                        if (this.history.length > 0) {
+                            this.loadChat(this.history[0].id);
+                        } else {
+                            this.startNewChat();
+                        }
+                    }
+                    this.saveHistory();
+                },
+                saveHistory() {
+                    // Update current chat messages
+                    const chatIndex = this.history.findIndex(c => c.id === this.currentChatId);
+                    if (chatIndex !== -1) {
+                        this.history[chatIndex].messages = this.messages;
+                        // Generate title if new
+                        if (this.messages.length > 0 && this.history[chatIndex].title === 'New Chat') {
+                            this.history[chatIndex].title = this.messages[0].content.slice(0, 30) + '...';
+                        }
+                    }
+                    localStorage.setItem('perplexica.history', JSON.stringify(this.history));
+                },
+
+                // Messaging Logic
+                async sendMessage() {
+                    if (!this.input.trim() || this.isLoading) return;
+
+                    if (!this.apiKeys.gemini) {
+                        alert('Please set your Gemini API Key in Settings.');
+                        this.showSettings = true;
+                        return;
+                    }
+
+                    const userQuery = this.input.trim();
+                    this.input = '';
+                    this.$refs.inputArea.style.height = 'auto';
+
+                    // Add User Message
+                    this.messages.push({
+                        role: 'user',
+                        content: userQuery
+                    });
+
+                    // Add Placeholder Assistant Message
+                    const assistantMsgIndex = this.messages.push({
+                        role: 'assistant',
+                        content: '',
+                        sources: [],
+                        loading: true
+                    }) - 1;
+
+                    this.isLoading = true;
+                    this.$nextTick(() => {
+                        const container = document.getElementById('chat-container');
+                        container.scrollTop = container.scrollHeight;
+                    });
+
+                    try {
+                        let sources = [];
+                        let prompt = '';
+
+                        // 1. Search (if not Writing Assistant)
+                        if (this.focusMode !== 'Writing Assistant' && this.apiKeys.tavily) {
+                            const searchResults = await this.searchTavily(userQuery);
+                            sources = searchResults.results.map(r => ({
+                                title: r.title,
+                                url: r.url,
+                                content: r.content
+                            }));
+
+                            // Update UI with sources
+                            this.messages[assistantMsgIndex].sources = sources;
+
+                            // Construct Prompt with context
+                            const contextStr = sources.map((s, i) => `[${i + 1}] Title: ${s.title}\nURL: ${s.url}\nContent: ${s.content}`).join('\n\n');
+                            prompt = `You are Ka0S_Perplexed, an AI search engine. Answer the query based on the context provided.
+                            
+Query: ${userQuery}
+
+Context:
+${contextStr}
+
+Instructions:
+- Answer the user's query comprehensively using the provided context.
+- Cite your sources using [1], [2] notation inline.
+- Use Markdown for formatting.
+- If the context doesn't contain the answer, say so, but try to answer from your general knowledge if appropriate (and note that it's general knowledge).
+- Provide a detailed and in-depth response. Do not limit the length if the topic requires thorough explanation.
+`;
+                        } else {
+                            // Direct Chat Prompt
+                            prompt = `You are Ka0S_Perplexed, a helpful AI assistant.
+                            
+Query: ${userQuery}
+
+Instructions:
+- Answer the user's query helpfully.
+- Use Markdown for formatting.
+`;
+                        }
+
+                        // 2. Stream Gemini Response
+                        await this.streamGemini(prompt, (chunk) => {
+                            this.messages[assistantMsgIndex].content += chunk;
+                            // Scroll to bottom
+                            const container = document.getElementById('chat-container');
+                            container.scrollTop = container.scrollHeight;
+                        });
+
+                    } catch (error) {
+                        console.error(error);
+                        this.messages[assistantMsgIndex].content += `\n\n**Error:** ${error.message}`;
+                    } finally {
+                        this.messages[assistantMsgIndex].loading = false;
+                        this.isLoading = false;
+                        this.saveHistory();
+                    }
+                },
+
+                // API Integrations
+                async searchTavily(query) {
+                    let adjustedQuery = query;
+                    let domains = [];
+
+                    // Focus Mode Logic
+                    if (this.focusMode === 'Reddit') {
+                        adjustedQuery += ' site:reddit.com';
+                        domains = ['reddit.com'];
+                    } else if (this.focusMode === 'YouTube') {
+                        adjustedQuery += ' site:youtube.com';
+                        domains = ['youtube.com'];
+                    } else if (this.focusMode === 'Academic') {
+                        adjustedQuery += ' academic paper';
+                    } else if (this.focusMode === 'Wolfram Alpha') {
+                        adjustedQuery += ' wolfram alpha';
+                    }
+
+                    const response = await fetch('https://api.tavily.com/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            api_key: this.apiKeys.tavily,
+                            query: adjustedQuery,
+                            search_depth: "basic",
+                            include_answer: false,
+                            max_results: 7,
+                            include_domains: domains.length > 0 ? domains : undefined
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Tavily Search failed');
+                    }
+                    return await response.json();
+                },
+
+                async streamGemini(prompt, onChunk) {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${this.apiKeys.gemini}`;
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{ text: prompt }]
+                            }]
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Gemini API failed');
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value, { stream: true });
+                        buffer += chunk;
+
+                        // Parse JSON objects from the stream (Gemini sends multiple JSON objects)
+                        // This is a simplified parser for the stream format
+                        // In a real app, we might need a more robust parser or use the official SDK
+                        // But for single file, we'll do manual parsing
+
+                        // Gemini stream returns array of objects like [{...}, {...}] or just {...}
+                        // We need to extract 'text' from candidates[0].content.parts[0].text
+
+                        // Hacky split by '}\n,' or similar to handle multiple JSONs in one chunk if needed
+                        // But usually we can just accumulate and try to parse if it's a valid JSON array or object
+
+                        // Actually, the raw stream from REST API is a JSON array that gets built up? 
+                        // No, it sends "data: " events or just a JSON array?
+                        // Let's assume standard REST stream behavior: it sends a JSON array `[` then objects `, { ... }` then `]`
+
+                        // To make it robust without a complex parser, let's just regex for the text parts
+                        // This is fragile but works for a single-file prototype without dependencies
+
+                        const regex = /"text":\s*"((?:[^"\\]|\\.)*)"/g;
+                        let match;
+                        while ((match = regex.exec(chunk)) !== null) {
+                            let text = match[1];
+                            // Unescape JSON string
+                            text = JSON.parse(`"${text}"`);
+                            onChunk(text);
+                        }
+                    }
+                },
+
+                // Markdown Rendering
+                renderMarkdown(text) {
+                    // Pre-process citations [1] -> <a ...>[1]</a>
+                    // This is tricky inside markdown, so we'll let marked parse it, then post-process or use a marked extension
+                    // For simplicity, let's just use marked and handle citations visually in the text if they are standard markdown links
+                    // Or we can replace [1] with a custom span before passing to marked
+
+                    // Simple replacement for [n] to make them stand out
+                    const textWithCitations = text.replace(/\[(\d+)\]/g, '<sup class="citation-link" title="Source $1">$1</sup>');
+
+                    const rawHtml = marked.parse(textWithCitations);
+                    return DOMPurify.sanitize(rawHtml);
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
