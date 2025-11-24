@@ -23,7 +23,7 @@ Everything runs locally in your browser—no backend server required.
 - **💬 Conversation Continuity**: Chat history persists within each session, allowing Gemini to maintain context across multiple queries and focus mode changes.
 - **💾 Local Storage**: Your chat history and API keys are stored securely in your browser.
 - **🌗 Dark Mode**: Built-in dark and light themes.
-- **📁 File Support**: Attach images, PDFs, and text files for analysis.
+- **📁 Multimodal File Support**: Attach **Images, PDFs, Videos, and Text files**. Gemini analyzes their content to generate relevant search queries and provide context-aware answers.
 - **📱 Responsive**: Works great on desktop and mobile.
 
 ## 🧠 How Search Refinement Works
