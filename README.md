@@ -20,6 +20,20 @@ Everything runs locally in your browser—no backend server required.
 - **🌗 Dark Mode**: Built-in dark and light themes.
 - **📱 Responsive**: Works great on desktop and mobile.
 
+## 📸 Screenshots
+
+### Main Chat Interface
+![Chat Interface](./Perplexed_Chat.png)
+
+### New Chat Session
+![New Chat](./Perplexed_newChat.png)
+
+### Settings Panel
+![Settings](./Perplexed_settings.png)
+
+### Light Mode Theme
+![Light Mode](./Perplexed_lightMode.png)
+
 ## 🛠️ Setup
 
 1.  **Download**: Save the `perplexed.html` file to your computer.
