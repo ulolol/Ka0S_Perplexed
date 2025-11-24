@@ -6,7 +6,7 @@ Everything runs locally in your browser—no backend server required.
 
 ## ✨ Features
 
-- **🚀 Single File**: The entire app is contained in one `index.html` file.
+- **🚀 Single File**: The entire app is contained in one `perplexed.html` file.
 - **🔍 Smart Search**: Uses Tavily to fetch up to 7 relevant sources from the web.
 - **🤖 AI Powered**: Uses Google Gemini (v2.5 Flash) to synthesize answers.
 - **🎯 Focus Modes**:
@@ -22,7 +22,7 @@ Everything runs locally in your browser—no backend server required.
 
 ## 🛠️ Setup
 
-1.  **Download**: Save the `index.html` file to your computer.
+1.  **Download**: Save the `perplexed.html` file to your computer.
 2.  **Get API Keys**:
     - **Tavily API Key**: Get one from [tavily.com](https://tavily.com/).
     - **Gemini API Key**: Get one from [aistudio.google.com](https://aistudio.google.com/).
