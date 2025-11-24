@@ -781,17 +781,16 @@
                             }
                         }
 
-                        // 1. Image Analysis (if images attached)
-                        let imageAnalysis = null;
-                        const imageFiles = this.selectedFiles.filter(f => f.data && f.type && f.type.startsWith('image/'));
-                        if (imageFiles.length > 0) {
-                            imageAnalysis = await this.analyzeImageAndGenerateQueries(imageFiles, userQuery);
+                        // 1. Content Analysis (if files attached)
+                        let contentAnalysis = null;
+                        if (this.selectedFiles.length > 0) {
+                            contentAnalysis = await this.analyzeAttachmentsAndGenerateQueries(this.selectedFiles, userQuery);
                         }
 
-                        // Determine search queries based on image analysis
+                        // Determine search queries based on analysis
                         let searchQueriesToUse = [userQuery];
-                        if (imageAnalysis && imageAnalysis.searchQueries && imageAnalysis.searchQueries.length > 0) {
-                            searchQueriesToUse = imageAnalysis.searchQueries;
+                        if (contentAnalysis && contentAnalysis.searchQueries && contentAnalysis.searchQueries.length > 0) {
+                            searchQueriesToUse = contentAnalysis.searchQueries;
                         }
 
                         // 2. Search (if not Writing Assistant)
@@ -817,10 +816,10 @@
                                     const quality = await this.checkSearchQuality(searchQueriesToUse[0], sources);
 
                                     if (!quality.isSufficient) {
-                                        // Use image-generated queries or generate new ones
+                                        // Use generated queries or generate new ones
                                         let queryForRefinement;
-                                        if (imageAnalysis && imageAnalysis.searchQueries && imageAnalysis.searchQueries.length > 1) {
-                                            queryForRefinement = imageAnalysis.searchQueries[1];
+                                        if (contentAnalysis && contentAnalysis.searchQueries && contentAnalysis.searchQueries.length > 1) {
+                                            queryForRefinement = contentAnalysis.searchQueries[1];
                                         } else {
                                             this.searchStatus = 'Refining search...';
                                             const improvedQueries = await this.generateSearchQueries(searchQueriesToUse[0], sources, 1);
@@ -857,18 +856,18 @@
                             // Construct Prompt with context
                             const contextStr = sources.map((s, i) => `[${i + 1}] Title: ${s.title}\nURL: ${s.url}\nContent: ${s.content.slice(0, 2000)}`).join('\n\n');
 
-                            let imageContextStr = '';
-                            if (imageAnalysis) {
-                                console.log('Using image analysis for answer:', imageAnalysis);
-                                imageContextStr = `\nImage Analysis:\n- What I see: ${imageAnalysis.imageDescription}\n- Main topic: ${imageAnalysis.mainTopic}`;
-                            } else if (imageFiles.length > 0) {
-                                console.warn('Image attached but analysis failed, continuing without it');
+                            let analysisContextStr = '';
+                            if (contentAnalysis) {
+                                console.log('Using content analysis for answer:', contentAnalysis);
+                                analysisContextStr = `\nFile Analysis:\n- Description/Summary: ${contentAnalysis.description}\n- Main topic: ${contentAnalysis.mainTopic}`;
+                            } else if (this.selectedFiles.length > 0) {
+                                console.warn('Files attached but analysis failed, continuing without it');
                             }
 
                             console.log('Search queries used:', searchQueriesToUse);
                             console.log('Number of sources:', sources.length);
 
-                            prompt = `You are Ka0S_Perplexed, an AI search engine. Answer queries based on ONLY the provided web context and image analysis.${conversationHistory ? '\n\nConversation History:' + conversationHistory : ''}${imageContextStr}
+                            prompt = `You are Ka0S_Perplexed, an AI search engine. Answer queries based on ONLY the provided web context and file analysis.${conversationHistory ? '\n\nConversation History:' + conversationHistory : ''}${analysisContextStr}
 
 Current Query: ${userQuery}
 
@@ -877,7 +876,7 @@ ${contextStr || 'No web context available'}
 
 Instructions:
 - PRIORITIZE the web context provided - this is current information from the web.
-- Combine image analysis with web context to provide a comprehensive answer.
+- Combine file analysis with web context to provide a comprehensive answer.
 - ALWAYS cite sources using [1], [2] notation for any information from web context.
 - Reference previous conversation if relevant.
 - Use Markdown for formatting.
@@ -887,13 +886,13 @@ Instructions:
 - Provide detailed, in-depth responses without artificial length limits.
 `;
                         } else {
-                            // Direct Chat Prompt (with image analysis if available)
-                            let imageContextStr = '';
-                            if (imageAnalysis) {
-                                imageContextStr = `\nImage Analysis:\n- What I see: ${imageAnalysis.imageDescription}\n- Main topic: ${imageAnalysis.mainTopic}`;
+                            // Direct Chat Prompt (with analysis if available)
+                            let analysisContextStr = '';
+                            if (contentAnalysis) {
+                                analysisContextStr = `\nFile Analysis:\n- Description/Summary: ${contentAnalysis.description}\n- Main topic: ${contentAnalysis.mainTopic}`;
                             }
 
-                            prompt = `You are Ka0S_Perplexed, a helpful AI assistant.${conversationHistory ? '\n\nConversation History:' + conversationHistory : ''}${imageContextStr}
+                            prompt = `You are Ka0S_Perplexed, a helpful AI assistant.${conversationHistory ? '\n\nConversation History:' + conversationHistory : ''}${analysisContextStr}
 
 Current Query: ${userQuery}
 
@@ -983,39 +982,43 @@ Instructions:
                     return null;
                 },
 
-                // Image Analysis & Context Generation
-                async analyzeImageAndGenerateQueries(imageFiles, userQuery) {
-                    // Analyze images and generate optimized search queries
-                    if (!imageFiles || imageFiles.length === 0) return null;
+                // File Analysis & Context Generation
+                async analyzeAttachmentsAndGenerateQueries(files, userQuery) {
+                    // Analyze images and text files to generate optimized search queries
+                    if (!files || files.length === 0) return null;
 
                     try {
-                        this.searchStatus = 'Analyzing image content...';
-                        console.log('Starting image analysis for', imageFiles.length, 'images');
+                        this.searchStatus = 'Analyzing attached files...';
+                        console.log('Starting analysis for', files.length, 'files');
 
-                        // Build parts array with images
+                        // Build parts array
                         const parts = [];
 
-                        // Add images first
-                        for (let img of imageFiles) {
-                            if (img.data && img.type) {
+                        // Add files (images, PDFs, videos)
+                        for (let file of files) {
+                            if (file.data && file.type && (file.type.startsWith('image/') || file.type === 'application/pdf' || file.type.startsWith('video/'))) {
                                 parts.push({
                                     inline_data: {
-                                        mime_type: img.type,
-                                        data: img.data
+                                        mime_type: file.type,
+                                        data: file.data
                                     }
+                                });
+                            } else if (file.content) {
+                                // Add text content
+                                parts.push({
+                                    text: `Content of file "${file.name}":\n${file.content.slice(0, 20000)}`
                                 });
                             }
                         }
 
                         // Add analysis prompt
                         parts.push({
-                            text: `Analyze this image(s) to generate web search queries.
-
+                            text: `Analyze the attached file(s) (images and/or text) to generate web search queries.
 User query: "${userQuery}"
 
 Respond with ONLY valid JSON (no markdown):
 {
-  "imageDescription": "2-3 sentence description of what you see",
+  "description": "2-3 sentence description of what you see or read in the files",
   "mainTopic": "the primary subject in one phrase",
   "searchQueries": ["specific search query 1", "specific search query 2", "specific search query 3"]
 }`
@@ -1041,7 +1044,7 @@ Respond with ONLY valid JSON (no markdown):
                         });
 
                         if (!response.ok) {
-                            console.warn('Image analysis API failed:', response.status);
+                            console.warn('File analysis API failed:', response.status);
                             return null;
                         }
 
@@ -1049,26 +1052,26 @@ Respond with ONLY valid JSON (no markdown):
                         let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
                         if (!text) {
-                            console.warn('No text in image analysis response', data);
+                            console.warn('No text in file analysis response', data);
                             return null;
                         }
 
-                        console.log('Image analysis raw response:', text);
+                        console.log('File analysis raw response:', text);
 
                         // Extract valid JSON from response
                         const jsonStr = this.extractJSON(text);
                         if (!jsonStr) {
-                            console.warn('Could not extract JSON from image analysis response:', text);
+                            console.warn('Could not extract JSON from file analysis response:', text);
                             return null;
                         }
 
                         console.log('Extracted JSON:', jsonStr);
                         const result = JSON.parse(jsonStr);
-                        console.log('Image analysis result:', result);
+                        console.log('File analysis result:', result);
                         this.searchStatus = '';
                         return result;
                     } catch (e) {
-                        console.error('Image analysis failed:', e);
+                        console.error('File analysis failed:', e);
                         this.searchStatus = '';
                         return null;
                     }
