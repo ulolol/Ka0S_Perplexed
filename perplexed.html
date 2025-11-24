@@ -325,19 +325,26 @@
                         <div x-show="msg.role === 'assistant'" class="flex flex-col space-y-6">
 
                             <!-- Sources Grid -->
-                            <div x-show="msg.sources && msg.sources.length > 0"
-                                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                                <template x-for="(source, idx) in (msg.sources || []).slice(0, 7)" :key="idx">
-                                    <a :href="source.url" target="_blank"
-                                        class="block p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-border dark:hover:bg-dark-border transition-colors text-xs border border-light-border dark:border-dark-border truncate group">
-                                        <div class="font-medium mb-1 truncate" x-text="source.title"></div>
-                                        <div class="flex items-center gap-1 text-light-muted dark:text-dark-muted">
-                                            <div class="w-4 h-4 rounded-full bg-light-border dark:bg-dark-border flex items-center justify-center text-[10px]"
-                                                x-text="idx + 1"></div>
-                                            <span class="truncate" x-text="new URL(source.url).hostname"></span>
-                                        </div>
-                                    </a>
-                                </template>
+                            <div x-show="msg.sources && msg.sources.length > 0" class="space-y-2">
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                    <template x-for="(source, idx) in (msg.sources || []).slice(0, 7)" :key="idx">
+                                        <a :href="source.url" target="_blank"
+                                            class="block p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-border dark:hover:bg-dark-border transition-colors text-xs border border-light-border dark:border-dark-border truncate group">
+                                            <div class="font-medium mb-1 truncate" x-text="source.title"></div>
+                                            <div class="flex items-center gap-1 text-light-muted dark:text-dark-muted">
+                                                <div class="w-4 h-4 rounded-full bg-light-border dark:bg-dark-border flex items-center justify-center text-[10px]"
+                                                    x-text="idx + 1"></div>
+                                                <span class="truncate" x-text="new URL(source.url).hostname"></span>
+                                            </div>
+                                        </a>
+                                    </template>
+                                </div>
+                                <!-- Search Deeper Button -->
+                                <button @click="performDeepSearch()"
+                                    x-show="!msg.deepSearchPerformed && !isLoading && msg.role === 'assistant'"
+                                    class="text-xs px-3 py-1.5 bg-accent/10 text-accent hover:bg-accent/20 rounded-lg transition-colors border border-accent/30">
+                                    🔍 Search Deeper
+                                </button>
                             </div>
 
                             <!-- Answer Content -->
@@ -353,10 +360,10 @@
                             <div x-show="msg.loading"
                                 class="flex items-center gap-2 text-light-muted dark:text-dark-muted ml-9">
                                 <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-                                <span class="text-sm">Thinking...</span>
-                            </div>
+                                <span class="text-sm" x-text="searchStatus || 'Thinking...'"></span>
                             </div>
                         </div>
+                    </div>
                 </template>
             </div>
         </div>
@@ -370,56 +377,66 @@
                     <textarea x-model="input" @keydown.enter.prevent="if(!$event.shiftKey) sendMessage()"
                         placeholder="Ask anything..."
                         class="w-full bg-transparent border-none focus:ring-0 resize-none max-h-48 min-h-[50px] p-2 text-base"
-                            rows="1" x-ref="inputArea"
-                            @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"></textarea>
- 
-                        <!-- Attached Files Preview -->
-                            <div x-show="filePreviews.length" class="mt-2 px-1 space-y-1 max-h-24 overflow-y-auto">
-                                <template x-for="preview in filePreviews" :key="preview.id">
-                                    <div class="flex items-center gap-2 p-2 bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-lg">
-                                        <template x-if="preview.type?.startsWith('image/')">
-                                            <img :src="'data:' + preview.type + ';base64,' + preview.data" class="w-8 h-8 object-cover rounded" :alt="preview.name">
-                                        </template>
-                                        <template x-else>
-                                            <div class="w-8 h-8 bg-light-border dark:bg-dark-border rounded flex items-center justify-center">
-                                                <i data-lucide="file-text" class="w-4 h-4 text-light-muted dark:text-dark-muted"></i>
-                                            </div>
-                                        </template>
-                                        <span class="text-xs flex-1 min-w-0 truncate font-medium" x-text="preview.name"></span>
-                                        <span class="text-xs text-light-muted dark:text-dark-muted" x-text="(preview.size / 1024).toFixed(1) + ' KB'"></span>
-                                        <button @click="removeFile(preview.id)" class="ml-1 p-1 hover:bg-light-border dark:hover:bg-dark-border rounded text-light-muted dark:text-dark-muted hover:text-red-500">
-                                            <i data-lucide="x" class="w-3 h-3"></i>
-                                        </button>
+                        rows="1" x-ref="inputArea"
+                        @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"></textarea>
+
+                    <!-- Attached Files Preview -->
+                    <div x-show="filePreviews.length" class="mt-2 px-1 space-y-1 max-h-24 overflow-y-auto">
+                        <template x-for="preview in filePreviews" :key="preview.id">
+                            <div
+                                class="flex items-center gap-2 p-2 bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded-lg">
+                                <template x-if="preview.type?.startsWith('image/')">
+                                    <img :src="'data:' + preview.type + ';base64,' + preview.data"
+                                        class="w-8 h-8 object-cover rounded" :alt="preview.name">
+                                </template>
+                                <template x-else>
+                                    <div
+                                        class="w-8 h-8 bg-light-border dark:bg-dark-border rounded flex items-center justify-center">
+                                        <i data-lucide="file-text"
+                                            class="w-4 h-4 text-light-muted dark:text-dark-muted"></i>
                                     </div>
                                 </template>
-                            </div>
- 
-                        <div class="flex items-center justify-between px-2 pb-1 mt-2">
-                            <div class="flex items-center gap-2">
-                                <div class="relative" x-data="{ open: false }">
-                                    <button @click="open = !open"
-                                        class="flex items-center gap-1 text-xs font-medium bg-light-bg dark:bg-dark-bg px-2 py-1 rounded-md border border-light-border dark:border-dark-border hover:bg-light-border dark:hover:bg-dark-border transition-colors">
-                                        <span x-text="focusMode"></span>
-                                        <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                                    </button>
-                                    <div x-show="open" @click.outside="open = false"
-                                        class="absolute bottom-full left-0 mb-2 w-48 bg-light-secondary dark:bg-dark-secondary border border-light-border dark:border-dark-border rounded-lg shadow-xl overflow-hidden z-50">
-                                        <template x-for="mode in focusModes" :key="mode">
-                                            <button @click="focusMode = mode; open = false"
-                                                class="w-full text-left px-4 py-2 text-sm hover:bg-light-border dark:hover:bg-dark-border transition-colors"
-                                                x-text="mode"></button>
-                                        </template>
-                                    </div>
-                                </div>
-                                <!-- File Upload -->
-                                <button type="button" @click="$refs.fileInput?.click()"
-                                    class="p-1.5 text-light-muted dark:text-dark-muted hover:bg-light-border dark:hover:bg-dark-border rounded transition-colors flex items-center gap-1"
-                                    :title="selectedFiles.length ? (selectedFiles.length + ' file' + (selectedFiles.length > 1 ? 's' : '') + ' selected') : 'Attach files/images'">
-                                    <i data-lucide="paperclip" class="w-4 h-4"></i>
-                                    <span x-show="selectedFiles.length" class="text-xs bg-accent text-white px-1.5 py-0.5 rounded-full" x-text="selectedFiles.length"></span>
+                                <span class="text-xs flex-1 min-w-0 truncate font-medium" x-text="preview.name"></span>
+                                <span class="text-xs text-light-muted dark:text-dark-muted"
+                                    x-text="(preview.size / 1024).toFixed(1) + ' KB'"></span>
+                                <button @click="removeFile(preview.id)"
+                                    class="ml-1 p-1 hover:bg-light-border dark:hover:bg-dark-border rounded text-light-muted dark:text-dark-muted hover:text-red-500">
+                                    <i data-lucide="x" class="w-3 h-3"></i>
                                 </button>
-                                <input x-ref="fileInput" type="file" multiple accept="image/*,application/pdf,text/plain,.txt,.md,application/json,video/*" @change="handleFiles($event)" class="hidden">
                             </div>
+                        </template>
+                    </div>
+
+                    <div class="flex items-center justify-between px-2 pb-1 mt-2">
+                        <div class="flex items-center gap-2">
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open"
+                                    class="flex items-center gap-1 text-xs font-medium bg-light-bg dark:bg-dark-bg px-2 py-1 rounded-md border border-light-border dark:border-dark-border hover:bg-light-border dark:hover:bg-dark-border transition-colors">
+                                    <span x-text="focusMode"></span>
+                                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                                </button>
+                                <div x-show="open" @click.outside="open = false"
+                                    class="absolute bottom-full left-0 mb-2 w-48 bg-light-secondary dark:bg-dark-secondary border border-light-border dark:border-dark-border rounded-lg shadow-xl overflow-hidden z-50">
+                                    <template x-for="mode in focusModes" :key="mode">
+                                        <button @click="focusMode = mode; open = false"
+                                            class="w-full text-left px-4 py-2 text-sm hover:bg-light-border dark:hover:bg-dark-border transition-colors"
+                                            x-text="mode"></button>
+                                    </template>
+                                </div>
+                            </div>
+                            <!-- File Upload -->
+                            <button type="button" @click="$refs.fileInput?.click()"
+                                class="p-1.5 text-light-muted dark:text-dark-muted hover:bg-light-border dark:hover:bg-dark-border rounded transition-colors flex items-center gap-1"
+                                :title="selectedFiles.length ? (selectedFiles.length + ' file' + (selectedFiles.length > 1 ? 's' : '') + ' selected') : 'Attach files/images'">
+                                <i data-lucide="paperclip" class="w-4 h-4"></i>
+                                <span x-show="selectedFiles.length"
+                                    class="text-xs bg-accent text-white px-1.5 py-0.5 rounded-full"
+                                    x-text="selectedFiles.length"></span>
+                            </button>
+                            <input x-ref="fileInput" type="file" multiple
+                                accept="image/*,application/pdf,text/plain,.txt,.md,application/json,video/*"
+                                @change="handleFiles($event)" class="hidden">
+                        </div>
                         <button @click="sendMessage()" :disabled="!input.trim() || isLoading"
                             class="p-2 bg-accent text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                             <i data-lucide="arrow-up" class="w-4 h-4"></i>
@@ -509,6 +526,8 @@
                     tavily: '',
                     gemini: ''
                 },
+                searchDeeper: false,
+                searchStatus: '',
 
                 // Initialization
                 initApp() {
@@ -688,7 +707,7 @@
                         }
                         if (processed) {
                             newFiles.push(processed);
-                            newPreviews.push({...processed, type: processed.type || 'text'});
+                            newPreviews.push({ ...processed, type: processed.type || 'text' });
                         }
                     }
                     this.selectedFiles = newFiles;
@@ -762,10 +781,26 @@
                             }
                         }
 
-                        // 1. Search (if not Writing Assistant)
+                        // 1. Image Analysis (if images attached)
+                        let imageAnalysis = null;
+                        const imageFiles = this.selectedFiles.filter(f => f.data && f.type && f.type.startsWith('image/'));
+                        if (imageFiles.length > 0) {
+                            imageAnalysis = await this.analyzeImageAndGenerateQueries(imageFiles, userQuery);
+                        }
+
+                        // Determine search queries based on image analysis
+                        let searchQueriesToUse = [userQuery];
+                        if (imageAnalysis && imageAnalysis.searchQueries && imageAnalysis.searchQueries.length > 0) {
+                            searchQueriesToUse = imageAnalysis.searchQueries;
+                        }
+
+                        // 2. Search (if not Writing Assistant)
                         if (this.focusMode !== 'Writing Assistant' && this.apiKeys.tavily) {
                             try {
-                                const searchResults = await this.searchTavily(userQuery);
+
+                                // Initial search with first query
+                                this.searchStatus = 'Searching (1/2)...';
+                                const searchResults = await this.searchTavily(searchQueriesToUse[0]);
                                 if (searchResults && searchResults.results && Array.isArray(searchResults.results)) {
                                     sources = searchResults.results.map(r => ({
                                         title: r.title || 'Untitled',
@@ -776,35 +811,89 @@
                                     throw new Error('Unexpected search results format');
                                 }
 
+                                // Auto-refinement: Check if results are sufficient
+                                if (sources.length > 0) {
+                                    this.searchStatus = 'Evaluating search quality...';
+                                    const quality = await this.checkSearchQuality(searchQueriesToUse[0], sources);
+
+                                    if (!quality.isSufficient) {
+                                        // Use image-generated queries or generate new ones
+                                        let queryForRefinement;
+                                        if (imageAnalysis && imageAnalysis.searchQueries && imageAnalysis.searchQueries.length > 1) {
+                                            queryForRefinement = imageAnalysis.searchQueries[1];
+                                        } else {
+                                            this.searchStatus = 'Refining search...';
+                                            const improvedQueries = await this.generateSearchQueries(searchQueriesToUse[0], sources, 1);
+                                            queryForRefinement = improvedQueries && improvedQueries.length > 0 ? improvedQueries[0] : null;
+                                        }
+
+                                        if (queryForRefinement) {
+                                            // Perform second search with improved query
+                                            this.searchStatus = 'Searching (2/2)...';
+                                            const refinedResults = await this.searchTavily(queryForRefinement);
+
+                                            if (refinedResults && refinedResults.results) {
+                                                const refinedSources = refinedResults.results.map(r => ({
+                                                    title: r.title || 'Untitled',
+                                                    url: r.url || '',
+                                                    content: r.content || ''
+                                                }));
+                                                // Combine and deduplicate
+                                                sources = this.deduplicateSources([...sources, ...refinedSources]);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                this.searchStatus = '';
                                 // Update UI with sources
                                 this.messages[assistantMsgIndex].sources = sources;
                             } catch (searchError) {
                                 console.warn('Tavily search failed, continuing without sources:', searchError);
                                 this.messages[assistantMsgIndex].sources = [];
+                                this.searchStatus = '';
                             }
 
                             // Construct Prompt with context
                             const contextStr = sources.map((s, i) => `[${i + 1}] Title: ${s.title}\nURL: ${s.url}\nContent: ${s.content.slice(0, 2000)}`).join('\n\n');
-                            prompt = `You are Ka0S_Perplexed, an AI search engine. Answer queries based on the provided context.${conversationHistory ? '\n\nConversation History:' + conversationHistory : ''}
+
+                            let imageContextStr = '';
+                            if (imageAnalysis) {
+                                console.log('Using image analysis for answer:', imageAnalysis);
+                                imageContextStr = `\nImage Analysis:\n- What I see: ${imageAnalysis.imageDescription}\n- Main topic: ${imageAnalysis.mainTopic}`;
+                            } else if (imageFiles.length > 0) {
+                                console.warn('Image attached but analysis failed, continuing without it');
+                            }
+
+                            console.log('Search queries used:', searchQueriesToUse);
+                            console.log('Number of sources:', sources.length);
+
+                            prompt = `You are Ka0S_Perplexed, an AI search engine. Answer queries based on ONLY the provided web context and image analysis.${conversationHistory ? '\n\nConversation History:' + conversationHistory : ''}${imageContextStr}
 
 Current Query: ${userQuery}
 
-Context:
-${contextStr}
+Web Context (from web search):
+${contextStr || 'No web context available'}
 
 Instructions:
-- Answer the user's query comprehensively using the provided context.
-- Reference previous conversation if relevant to provide continuity.
-- Cite your sources using [1], [2] notation inline within your answer.
-- Use Markdown for formatting (bold, italics, lists, etc.).
-- Do NOT list or enumerate the sources at the beginning or end - they are shown separately.
-- Do NOT repeat the context information - synthesize and answer the question.
-- If the context doesn't contain the answer, say so, but try to answer from your general knowledge if appropriate (and note that it's general knowledge).
-- Provide a detailed and in-depth response. Do not limit the length if the topic requires thorough explanation.
+- PRIORITIZE the web context provided - this is current information from the web.
+- Combine image analysis with web context to provide a comprehensive answer.
+- ALWAYS cite sources using [1], [2] notation for any information from web context.
+- Reference previous conversation if relevant.
+- Use Markdown for formatting.
+- Do NOT list or repeat source information - just cite with numbers.
+- Only use general knowledge if explicitly stated in the query (e.g., "what do you know about...").
+- If web context is insufficient, state this clearly.
+- Provide detailed, in-depth responses without artificial length limits.
 `;
                         } else {
-                            // Direct Chat Prompt
-                            prompt = `You are Ka0S_Perplexed, a helpful AI assistant.${conversationHistory ? '\n\nConversation History:' + conversationHistory : ''}
+                            // Direct Chat Prompt (with image analysis if available)
+                            let imageContextStr = '';
+                            if (imageAnalysis) {
+                                imageContextStr = `\nImage Analysis:\n- What I see: ${imageAnalysis.imageDescription}\n- Main topic: ${imageAnalysis.mainTopic}`;
+                            }
+
+                            prompt = `You are Ka0S_Perplexed, a helpful AI assistant.${conversationHistory ? '\n\nConversation History:' + conversationHistory : ''}${imageContextStr}
 
 Current Query: ${userQuery}
 
@@ -815,7 +904,7 @@ Instructions:
 `;
 
                         }
- 
+
                         // Process attached files
                         let parts = [];
                         if (this.selectedFiles.length > 0) {
@@ -824,7 +913,7 @@ Instructions:
                                 if (file.content) {
                                     // Append text content to prompt
                                     prompt += `\n\n--- Content of ${file.name} (text file) ---\n${file.content.slice(0, 15000)}`;
-                                    fileSummary += `- ${file.name} (text, ${Math.round(file.size/1024)}KB)\n`;
+                                    fileSummary += `- ${file.name} (text, ${Math.round(file.size / 1024)}KB)\n`;
                                 } else if (file.data) {
                                     // Add as inline data for vision/multimodal
                                     parts.push({
@@ -833,7 +922,7 @@ Instructions:
                                             data: file.data
                                         }
                                     });
-                                    fileSummary += `- ${file.name} (image/file, ${Math.round(file.size/1024)}KB)\n`;
+                                    fileSummary += `- ${file.name} (image/file, ${Math.round(file.size / 1024)}KB)\n`;
                                 }
                             }
                             prompt = `Analyze any attached files as needed, then answer the query.${fileSummary}\n\n${prompt}`;
@@ -866,6 +955,312 @@ Instructions:
                         this.selectedFiles = [];
                         this.filePreviews = [];
                         this.saveHistory();
+                    }
+                },
+
+                // Helper: Extract valid JSON from text response
+                extractJSON(text) {
+                    if (!text) return null;
+
+                    // Remove markdown code blocks
+                    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+                    // Find the first { and count braces to find matching }
+                    let startIdx = text.indexOf('{');
+                    if (startIdx === -1) return null;
+
+                    let braceCount = 0;
+                    for (let i = startIdx; i < text.length; i++) {
+                        if (text[i] === '{') braceCount++;
+                        else if (text[i] === '}') {
+                            braceCount--;
+                            if (braceCount === 0) {
+                                return text.substring(startIdx, i + 1);
+                            }
+                        }
+                    }
+
+                    return null;
+                },
+
+                // Image Analysis & Context Generation
+                async analyzeImageAndGenerateQueries(imageFiles, userQuery) {
+                    // Analyze images and generate optimized search queries
+                    if (!imageFiles || imageFiles.length === 0) return null;
+
+                    try {
+                        this.searchStatus = 'Analyzing image content...';
+                        console.log('Starting image analysis for', imageFiles.length, 'images');
+
+                        // Build parts array with images
+                        const parts = [];
+
+                        // Add images first
+                        for (let img of imageFiles) {
+                            if (img.data && img.type) {
+                                parts.push({
+                                    inline_data: {
+                                        mime_type: img.type,
+                                        data: img.data
+                                    }
+                                });
+                            }
+                        }
+
+                        // Add analysis prompt
+                        parts.push({
+                            text: `Analyze this image(s) to generate web search queries.
+
+User query: "${userQuery}"
+
+Respond with ONLY valid JSON (no markdown):
+{
+  "imageDescription": "2-3 sentence description of what you see",
+  "mainTopic": "the primary subject in one phrase",
+  "searchQueries": ["specific search query 1", "specific search query 2", "specific search query 3"]
+}`
+                        });
+
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKeys.gemini}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts }],
+                                generationConfig: {
+                                    temperature: 0.3,
+                                    maxOutputTokens: 8192,
+                                    responseMimeType: 'application/json'
+                                },
+                                safetySettings: [
+                                    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+                                    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+                                    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+                                ]
+                            })
+                        });
+
+                        if (!response.ok) {
+                            console.warn('Image analysis API failed:', response.status);
+                            return null;
+                        }
+
+                        const data = await response.json();
+                        let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                        if (!text) {
+                            console.warn('No text in image analysis response', data);
+                            return null;
+                        }
+
+                        console.log('Image analysis raw response:', text);
+
+                        // Extract valid JSON from response
+                        const jsonStr = this.extractJSON(text);
+                        if (!jsonStr) {
+                            console.warn('Could not extract JSON from image analysis response:', text);
+                            return null;
+                        }
+
+                        console.log('Extracted JSON:', jsonStr);
+                        const result = JSON.parse(jsonStr);
+                        console.log('Image analysis result:', result);
+                        this.searchStatus = '';
+                        return result;
+                    } catch (e) {
+                        console.error('Image analysis failed:', e);
+                        this.searchStatus = '';
+                        return null;
+                    }
+                },
+
+                // Search Refinement & Deep Search
+                async checkSearchQuality(query, results) {
+                    // Ask Gemini if search results are sufficient
+                    try {
+                        const prompt = `Query: "${query}"
+
+Search Results (${results.length} found):
+${results.map((r, i) => `${i + 1}. ${r.title}`).join('\n')}
+
+Are these results specific and detailed enough to comprehensively answer the query? Be strict - require evidence that results cover the topic. Respond ONLY with JSON (no markdown, no code blocks):
+{"isSufficient": false, "reason": "reason why"}`;
+
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKeys.gemini}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: prompt }] }],
+                                generationConfig: {
+                                    temperature: 0.2,
+                                    maxOutputTokens: 8192,
+                                    responseMimeType: 'application/json'
+                                },
+                                safetySettings: [
+                                    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+                                    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+                                    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+                                ]
+                            })
+                        });
+
+                        if (!response.ok) return { isSufficient: false };
+                        const data = await response.json();
+                        let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+                        if (!text) {
+                            console.warn('Quality check response empty. Full data:', JSON.stringify(data, null, 2));
+                        } else {
+                            console.log('Quality check raw response:', text);
+                        }
+
+                        // Extract valid JSON from response
+                        const jsonStr = this.extractJSON(text);
+                        if (!jsonStr) {
+                            console.warn('Could not extract JSON from quality check response:', text);
+                            return { isSufficient: false };
+                        }
+
+                        console.log('Extracted quality check JSON:', jsonStr);
+                        const result = JSON.parse(jsonStr);
+                        console.debug('Quality check result:', result);
+                        return result;
+                    } catch (e) {
+                        console.error('Quality check failed, assuming insufficient:', e);
+                        return { isSufficient: false };
+                    }
+                },
+
+                async generateSearchQueries(originalQuery, existingResults, count = 1) {
+                    // Generate refined search queries based on current results
+                    try {
+                        const resultsSummary = existingResults.map((r, i) => `${i + 1}. ${r.title}`).join('\n');
+                        const prompt = `Original query: "${originalQuery}"\n\nCurrent search results:\n${resultsSummary}\n\nGenerate ${count} improved search ${count === 1 ? 'query' : 'queries'} to find better information. Return ONLY a JSON array of strings: ["query1"${count > 1 ? ', "query2"' : ''}]`;
+
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKeys.gemini}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: prompt }] }],
+                                generationConfig: {
+                                    temperature: 0.7,
+                                    maxOutputTokens: 8192,
+                                    responseMimeType: 'application/json'
+                                },
+                                safetySettings: [
+                                    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+                                    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+                                    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+                                ]
+                            })
+                        });
+
+                        if (!response.ok) return [];
+                        const data = await response.json();
+                        let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+
+                        console.log('Query generation raw response:', text);
+
+                        // Try to extract JSON array
+                        const jsonStr = this.extractJSON(text) || text.trim();
+                        console.log('Extracted query JSON:', jsonStr);
+
+                        const result = JSON.parse(jsonStr);
+                        return Array.isArray(result) ? result : [];
+                    } catch (e) {
+                        console.error('Query generation failed:', e);
+                        return [];
+                    }
+                },
+
+                deduplicateSources(sourcesArray) {
+                    // Remove duplicate sources by URL, keeping the first occurrence
+                    const seen = new Set();
+                    return sourcesArray.filter(source => {
+                        if (seen.has(source.url)) return false;
+                        seen.add(source.url);
+                        return true;
+                    });
+                },
+
+                async performDeepSearch() {
+                    // Perform deep search with 4 total queries
+                    const lastAssistantIdx = this.messages.findIndex((m, i) => i === this.messages.length - 1 && m.role === 'assistant');
+                    if (lastAssistantIdx === -1) return;
+
+                    const msg = this.messages[lastAssistantIdx];
+                    const userQuery = this.messages[lastAssistantIdx - 1]?.content || '';
+
+                    if (!userQuery) return;
+
+                    this.isLoading = true;
+                    msg.loading = true;
+                    msg.deepSearchPerformed = true;
+
+                    try {
+                        let allSources = msg.sources || [];
+
+                        // Generate 3 additional search queries
+                        this.searchStatus = 'Generating search strategies...';
+                        const newQueries = await this.generateSearchQueries(userQuery, allSources, 3);
+
+                        // Perform 3 more searches
+                        for (let i = 0; i < newQueries.length; i++) {
+                            this.searchStatus = `Searching (${i + 2}/4)...`;
+                            try {
+                                const results = await this.searchTavily(newQueries[i]);
+                                if (results && results.results) {
+                                    const newSources = results.results.map(r => ({
+                                        title: r.title || 'Untitled',
+                                        url: r.url || '',
+                                        content: r.content || ''
+                                    }));
+                                    allSources = allSources.concat(newSources);
+                                }
+                            } catch (e) {
+                                console.warn(`Search ${i + 2} failed:`, e);
+                            }
+                        }
+
+                        // Deduplicate and update sources
+                        msg.sources = this.deduplicateSources(allSources);
+
+                        // Re-generate answer with all sources
+                        this.searchStatus = 'Generating comprehensive answer...';
+                        msg.content = '';
+
+                        const contextStr = msg.sources.map((s, i) => `[${i + 1}] Title: ${s.title}\nURL: ${s.url}\nContent: ${s.content.slice(0, 2000)}`).join('\n\n');
+                        const prompt = `You are Ka0S_Perplexed, an AI search engine. Answer queries based on the provided context (this is an expanded search with more comprehensive results).
+
+Current Query: ${userQuery}
+
+Expanded Context (from 4 searches):
+${contextStr}
+
+Instructions:
+- Provide an even more comprehensive answer using all available context.
+- Synthesize information from multiple sources.
+- Cite your sources using [1], [2] notation inline.
+- Use Markdown for formatting.
+- Do NOT list sources - they are shown separately.
+- Provide a detailed, in-depth response.`;
+
+                        const parts = [{ text: prompt }];
+                        await this.streamGemini(parts, (chunk) => {
+                            msg.content += chunk;
+                        });
+
+                        this.searchStatus = '';
+                        this.saveHistory();
+                    } catch (error) {
+                        console.error('Deep search error:', error);
+                        msg.content += `\n\n**Error during deep search:** ${error.message}`;
+                        this.searchStatus = '';
+                    } finally {
+                        this.isLoading = false;
+                        msg.loading = false;
                     }
                 },
 
