@@ -519,7 +519,7 @@
                 showSettings: false,
                 mobileMenuOpen: false,
                 focusMode: 'All',
-                focusModes: ['All', 'Academic', 'YouTube', 'Reddit', 'Writing Assistant', 'Wolfram Alpha'],
+                focusModes: ['All', 'Academic', 'Reddit', 'Writing Assistant', 'Wolfram Alpha'],
                 selectedFiles: [],
                 filePreviews: [],
                 apiKeys: {
@@ -730,7 +730,6 @@
                     this.filePreviews = this.filePreviews.filter(p => p.id !== id);
                 },
 
-                // Messaging Logic
                 // Messaging Logic
                 async sendMessage() {
                     if (!this.input.trim() || this.isLoading) return;
@@ -1250,26 +1249,26 @@ Respond ONLY with valid JSON:
                         this.searchStatus = 'Evaluating search results...';
                         const contextStr = currentSources.map((s, i) => `[${i + 1}] Title: ${s.title}\nSnippet: ${s.content.slice(0, 500)}`).join('\n\n');
 
-                        const prompt = `You are a research manager.Evaluate if the gathered search results are sufficient to answer the user's query comprehensively.
+                        const prompt = `You are a research manager. Evaluate if the gathered search results are sufficient to answer the user's query comprehensively.
 
 User Query: "${userQuery}"
 
 Current Search Results:
 ${contextStr}
 
-                        Instructions:
-                        1. Read the search results.Do they contain the specific facts, figures, or details requested ?
-                            2. Are there conflicting pieces of information that need resolution ?
-                                3. Is the information outdated ?
-                                    4. If the results are sufficient, set "isSufficient" to true.
-5. If NOT sufficient, provide a "missingInformation" summary and generate 1 - 2 "newQueries" to find that missing info.
+Instructions:
+1. Read the search results. Do they contain the specific facts, figures, or details requested?
+2. Are there conflicting pieces of information that need resolution?
+3. Is the information outdated?
+4. If the results are sufficient, set "isSufficient" to true.
+5. If NOT sufficient, provide a "missingInformation" summary and generate 1-2 "newQueries" to find that missing info.
 
 Respond ONLY with valid JSON:
-                        {
-                            "isSufficient": boolean,
-                                "missingInformation": "What is missing (if anything)",
-                                    "newQueries": ["refined query 1"]
-                        } `;
+{
+  "isSufficient": boolean,
+  "missingInformation": "What is missing (if anything)",
+  "newQueries": ["refined query 1"]
+}`;
 
                         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKeys.gemini}`, {
                             method: 'POST',
@@ -1353,20 +1352,20 @@ Respond ONLY with valid JSON:
                         msg.content = '';
 
                         const contextStr = msg.sources.map((s, i) => `[${i + 1}]Title: ${s.title} \nURL: ${s.url} \nContent: ${s.content.slice(0, 2000)} `).join('\n\n');
-                        const prompt = `You are Ka0S_Perplexed, an AI search engine.Answer queries based on the provided context(this is an expanded search with more comprehensive results).
+                        const prompt = `You are Ka0S_Perplexed, an AI search engine. Answer queries based on the provided context (this is an expanded search with more comprehensive results).
 
 Current Query: ${userQuery}
 
-Expanded Context(from 4 searches):
+Expanded Context (from 4 searches):
 ${contextStr}
 
-            Instructions:
-            - Provide an even more comprehensive answer using all available context.
-            - Synthesize information from multiple sources.
-- Cite your sources using[1], [2] notation inline.
+Instructions:
+- Provide an even more comprehensive answer using all available context.
+- Synthesize information from multiple sources.
+- Cite your sources using [1], [2] notation inline.
 - Use Markdown for formatting.
 - Do NOT list sources - they are shown separately.
-- Provide a detailed, in -depth response.`;
+- Provide a detailed, in-depth response.`;
 
                         const parts = [{ text: prompt }];
                         await this.streamGemini(parts, (chunk) => {
@@ -1389,14 +1388,12 @@ ${contextStr}
                 async searchTavily(query) {
                     let adjustedQuery = query;
                     let domains = [];
+                    let searchDepth = "basic";
 
                     // Focus Mode Logic
                     if (this.focusMode === 'Reddit') {
                         adjustedQuery += ' site:reddit.com';
                         domains = ['reddit.com'];
-                    } else if (this.focusMode === 'YouTube') {
-                        adjustedQuery += ' site:youtube.com';
-                        domains = ['youtube.com'];
                     } else if (this.focusMode === 'Academic') {
                         adjustedQuery += ' academic paper';
                     } else if (this.focusMode === 'Wolfram Alpha') {
@@ -1411,7 +1408,7 @@ ${contextStr}
                         body: JSON.stringify({
                             api_key: this.apiKeys.tavily,
                             query: adjustedQuery,
-                            search_depth: "basic",
+                            search_depth: searchDepth,
                             include_answer: false,
                             max_results: 7,
                             include_domains: domains.length > 0 ? domains : undefined
