@@ -58,8 +58,8 @@
 4. ⚙️ Settings → Paste keys **or** load `api-keys.json`:
    ```json
    {
-     \"tavily\": \"tvly-xxx\",
-     \"gemini\": \"AIzaSy-xxx\"
+     "tavily": "tvly-xxx",
+     "gemini": "AIzaSy-xxx"
    }
    ```
 
