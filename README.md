@@ -1,106 +1,83 @@
 # 🌀 Ka0S_Perplexed
 
-**Ka0S_Perplexed** is a lightweight, single-file AI search engine inspired by Perplexica. It combines the power of **Google Gemini** for reasoning and **Tavily** for real-time web search to provide comprehensive, cited answers to your questions.
+**Ka0S_Perplexed** is a fully self-contained, single-file AI search engine inspired by Perplexica. Powered by **Google Gemini 2.5 Flash** for intelligent reasoning and **Tavily** for real-time web search, it delivers cited answers with **AI-selected images** and **current date/time grounding**.
 
-Everything runs locally in your browser—no backend server required.
+🌐 Everything runs in your browser—no server needed.
 
 ## ✨ Features
 
-- **🚀 Single File**: The entire app is contained in one `perplexed.html` file.
-- **🔍 Smart Search**: Uses Tavily to fetch up to 7 relevant sources from the web.
-- **🤖 AI Powered**: Uses **Google Gemini 2.5 Flash** with an expanded **8k token window** for deep, comprehensive answers and robust JSON reasoning.
-- **🧠 Self-Feedback Search Loop**:
-  - **Auto-Refinement**: Gemini automatically evaluates search results and refines queries if needed (up to 2 searches).
-  - **Search Deeper**: Click to perform comprehensive 4-search deep dive with AI-generated queries for better answers.
-  - **Real-time Status**: Watch search progress with live status updates.
+- **🚀 Single HTML File** • Just `perplexed.html` • Instant deploy
+- **🔍 Gemini-First Reasoning Loop**:
+  - **Plans** optimal searches via AI assessment
+  - **Executes** adaptive Tavily searches (up to 3 refinement rounds)
+  - **Evaluates** result quality & auto-refines
+  - Live status: `Planning... → Searching... → Selecting images...`
+- **🖼️ Relevant Images** • AI curates 1-3 top thumbnails with hover previews
+- **📅 Temporal Grounding** • Real-time UTC time in prompts for current events
+- **🤖 32k Token Context** • Deep analysis, JSON parsing, multimodal files
 - **🎯 Focus Modes**:
-    - **All**: General web search.
-    - **Academic**: Prioritizes scholarly papers and articles.
-    - **YouTube**: Finds relevant videos.
-    - **Reddit**: Searches discussions and threads.
-    - **Writing Assistant**: Chat directly with Gemini (no search).
-    - **Wolfram Alpha**: Computational knowledge search.
-- **💬 Conversation Continuity**: Chat history persists within each session, allowing Gemini to maintain context across multiple queries and focus mode changes.
-- **💾 Local Storage**: Your chat history and API keys are stored securely in your browser.
-- **🌗 Dark Mode**: Built-in dark and light themes.
-- **📁 Multimodal File Support**: Attach **Images, PDFs, Videos, and Text files**. Gemini analyzes their content to generate relevant search queries and provide context-aware answers.
-- **📱 Responsive**: Works great on desktop and mobile.
+  | Mode | Description |
+  |------|-------------|
+  | **All** | General web |
+  | **Academic** | Papers & research |
+  | **Reddit** | Discussions |
+  | **Writing Assistant** | Pure chat |
+  | **Wolfram Alpha** | Math/compute |
+- **📁 Multimodal Files** • Images/PDFs/text → AI-generated search queries
+- **💾 Local History** • Persistent chats & keys in browser storage
+- **🌗 Themes** • Auto dark/light + responsive mobile UI
+- **🔍 Search Deeper** • 4-query deep dive for complex topics
 
-## 🧠 How Search Refinement Works
+> **~250 deep searches/mo** on Tavily free tier (1000 queries)
 
-### Automatic Refinement (Default)
-Every search automatically:
-1. **Searches** using your query (1/2)
-2. **Evaluates** if results are comprehensive enough
-3. **Refines** if needed by generating a better search query
-4. **Searches again** with improved query (2/2)
-5. **Combines & deduplicates** results
-6. **Generates** a comprehensive answer
+## 🧠 How It Works
 
-You'll see status messages: `Searching (1/2)... → Evaluating search quality... → Refining search... → Searching (2/2)...`
+1. **Query** → Gemini plans: needs search? → Generates queries
+2. **Search Loop**:
+   ```
+   Search → Fetch sources + images → Evaluate → Refine? → Repeat (max 3)
+   ```
+3. **Select Images** → Gemini picks visuals
+4. **Ground & Answer** → Synthesizes with date context + citations
 
-### Search Deeper (Manual)
-For more comprehensive research, click the **🔍 Search Deeper** button below any answer:
-1. Starts with your original query
-2. AI generates 3 additional refined search queries
-3. Performs 4 total searches (1/4, 2/4, 3/4, 4/4)
-4. Combines all results with deduplication
-5. Regenerates answer with expanded context
-
-Perfect for complex topics, research papers, or when you need maximum accuracy.
-
-**Budget**: With Tavily's 1000 monthly queries, you can perform ~250 deep searches!
+![Flow](./Perplexed_Chat.png)
 
 ## 📸 Screenshots
 
-### Main Chat Interface
-![Chat Interface](./Perplexed_Chat.png)
+| Chat | New Session | Settings | Light Mode |
+|------|-------------|----------|------------|
+| ![Chat](./Perplexed_Chat.png) | ![New](./Perplexed_newChat.png) | ![Settings](./Perplexed_settings.png) | ![Light](./Perplexed_lightMode.png) |
 
-### New Chat Session
-![New Chat](./Perplexed_newChat.png)
+## 🚀 Quick Start
 
-### Settings Panel
-![Settings](./Perplexed_settings.png)
+1. 💾 Save `perplexed.html`
+2. 🔑 Get keys:
+   - [Tavily](https://tavily.com) (search)
+   - [Gemini AI Studio](https://aistudio.google.com) (reasoning)
+3. ⚡ Open in browser
+4. ⚙️ Settings → Paste keys **or** load `api-keys.json`:
+   ```json
+   {
+     \"tavily\": \"tvly-xxx\",
+     \"gemini\": \"AIzaSy-xxx\"
+   }
+   ```
 
-### Light Mode Theme
-![Light Mode](./Perplexed_lightMode.png)
+## 🏗️ Stack
 
-## 🛠️ Setup
+- **Alpine.js** (state)
+- **Tailwind CSS** (CDN)
+- **Marked.js** (MD)
+- **Lucide** (icons)
+- **DOMPurify** (secure)
 
-1.  **Download**: Save the `perplexed.html` file to your computer.
-2.  **Get API Keys**:
-    - **Tavily API Key**: Get one from [tavily.com](https://tavily.com/).
-    - **Gemini API Key**: Get one from [aistudio.google.com](https://aistudio.google.com/).
-3.  **Run**: Double-click `perplexed.html` to open it in your browser.
-4.  **Configure**:
-    - Click the **Settings** (gear icon) in the sidebar.
-    - Enter your keys manually OR load them from a JSON file (see below).
+## ⚠️ Notes
 
-### 🔑 API Keys JSON (Optional)
-
-You can create a file named `api-keys-example.json` to quickly load your keys:
-
-```json
-{
-  "tavily": "tvly-YOUR_KEY_HERE",
-  "gemini": "AIzaSy-YOUR_KEY_HERE"
-}
-```
-
-## 🏗️ Tech Stack
-
-- **HTML5**: Structure.
-- **Tailwind CSS**: Styling (via CDN).
-- **Alpine.js**: Reactivity and state management.
-- **Marked.js**: Markdown rendering.
-- **DOMPurify**: Security and sanitization.
-
-## ⚠️ Note
-
-Since this is a client-side application using CDNs, it requires an internet connection to load libraries and make API calls. API keys are stored in your browser's `localStorage` and are never sent to any server other than the respective API providers (Google and Tavily).
-
-> [!NOTE]
-> You may see a console warning about `cdn.tailwindcss.com`. This is expected for a portable single-file application and does not affect functionality.
+- Internet required (CDNs + APIs)
+- Keys stored locally (localStorage)
+- Console Tailwind warning? Normal for CDN.
 
 ---
-*Inspired by [Perplexica](https://github.com/ItzCrazyKns/Perplexica).*
+
+*Inspired by [Perplexica](https://github.com/ItzCrazyKns/Perplexica)*  
+✨ [Live Demo? Host yourself!]
