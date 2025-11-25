@@ -627,6 +627,9 @@
                     this.currentChatId = newChat.id;
                     this.messages = [];
                     this.saveHistory();
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                    });
                 },
                 loadChat(id) {
                     const chat = this.history.find(c => c.id === id);
