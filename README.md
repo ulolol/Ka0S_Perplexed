@@ -1,5 +1,7 @@
 # 🌀 Ka0S_Perplexed
 
+![Ka0S Perplexed Logo](perplexed_lowQ_logo.gif)
+
 **Ka0S_Perplexed** is a fully self-contained, single-file AI search engine inspired by Perplexica. Powered by **Google Gemini 2.5 Flash** for intelligent reasoning and **Tavily** for real-time web search, it delivers cited answers with **AI-selected images** and **current date/time grounding**.
 
 🌐 Everything runs in your browser—no server needed.
