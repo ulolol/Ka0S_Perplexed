@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Ka0S_Perplexed</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌀</text></svg>">
@@ -113,9 +113,6 @@
 
     <!-- DOMPurify -->
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         /* === BASE STYLES === */
@@ -321,9 +318,24 @@
             background: rgba(56, 189, 248, 0.1);
         }
 
+        /* === INPUT AREA WITH SAFE AREA INSETS === */
+        .input-area {
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+            background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.8) 60%, transparent 100%);
+        }
+
+        .light .input-area {
+            background: linear-gradient(to top, rgba(240, 249, 255, 0.95) 0%, rgba(240, 249, 255, 0.8) 60%, transparent 100%);
+        }
+
+        /* === CHAT CONTENT WITH SAFE AREA INSETS === */
+        .chat-content {
+            padding-bottom: calc(12rem + env(safe-area-inset-bottom, 0px));
+        }
+
         /* === CHAT ITEM === */
         .chat-item {
-            border-radius: 12px;
+            border-radius: 9999px;
             padding: 12px 14px;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -341,13 +353,13 @@
         .chat-item.active::before {
             content: '';
             position: absolute;
-            left: 0;
+            left: 4px;
             top: 50%;
             transform: translateY(-50%);
             width: 3px;
-            height: 60%;
+            height: 50%;
             background: linear-gradient(180deg, #0ea5e9, #38bdf8);
-            border-radius: 0 3px 3px 0;
+            border-radius: 9999px;
         }
 
         /* === SOURCE CARD === */
@@ -514,18 +526,18 @@
     x-data="app()" x-init="initApp()">
 
     <!-- Sidebar -->
-    <aside class="w-72 glass-panel flex-col hidden md:flex">
+    <aside class="w-72 glass-panel flex-col hidden md:flex rounded-3xl my-2 ml-2">
         <div class="p-5 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-violet-500 flex items-center justify-center shadow-glow">
-                    <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                    <span class="text-lg">✨</span>
                 </div>
                 <span class="font-display font-bold text-lg tracking-tight">Ka0S_Perplexed</span>
             </div>
             <button @click="startNewChat()"
                 class="btn-ghost text-dark-muted hover:text-accent"
                 title="New Chat">
-                <i data-lucide="plus" class="w-5 h-5"></i>
+                <span class="text-lg">➕</span>
             </button>
         </div>
 
@@ -534,12 +546,12 @@
                 <div class="chat-item group flex items-center gap-2"
                     :class="{ 'active': currentChatId === chat.id }"
                     @click="loadChat(chat.id)">
-                    <i data-lucide="message-square" class="w-4 h-4 text-dark-muted shrink-0"></i>
+                    <span class="text-sm">💬</span>
                     <span x-text="chat.title || 'New Chat'" class="text-sm truncate flex-1"></span>
                     <button @click.stop="deleteChat(chat.id)"
                         class="delete-btn touch-target"
                         title="Delete chat">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        <span class="text-sm">🗑️</span>
                     </button>
                 </div>
             </template>
@@ -548,7 +560,7 @@
         <div class="p-4 border-t border-dark-border/30">
             <button @click="showSettings = true"
                 class="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-dark-border/20 transition-colors text-sm font-medium text-dark-muted hover:text-dark-text">
-                <i data-lucide="settings" class="w-4 h-4"></i>
+                <span class="text-sm">⚙️</span>
                 Settings
             </button>
         </div>
@@ -560,12 +572,12 @@
         <header class="md:hidden flex items-center justify-between p-4 glass-panel z-10">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-violet-500 flex items-center justify-center">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+                    <span class="text-sm">✨</span>
                 </div>
                 <span class="font-display font-bold">Ka0S_Perplexed</span>
             </div>
             <button @click="mobileMenuOpen = !mobileMenuOpen" class="btn-ghost touch-target">
-                <i data-lucide="menu" class="w-5 h-5"></i>
+                <span class="text-lg">☰</span>
             </button>
         </header>
 
@@ -578,7 +590,7 @@
 
         <!-- Mobile Menu Panel -->
         <div x-show="mobileMenuOpen"
-            class="absolute inset-y-0 left-0 w-80 glass-panel z-50 transform md:hidden flex flex-col"
+            class="absolute inset-y-0 left-0 w-80 glass-panel z-50 transform md:hidden flex flex-col rounded-r-3xl my-2"
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="-translate-x-full"
             x-transition:enter-end="translate-x-0"
@@ -588,13 +600,13 @@
             <div class="p-5 flex items-center justify-between border-b border-dark-border/30">
                 <span class="font-display font-bold text-lg">Chats</span>
                 <button @click="mobileMenuOpen = false" class="btn-ghost touch-target">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                    <span class="text-lg">✕</span>
                 </button>
             </div>
             <div class="p-4">
                 <button @click="startNewChat(); mobileMenuOpen = false"
                     class="w-full flex items-center justify-center gap-2 p-3.5 btn-primary mb-4">
-                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    <span class="text-lg">➕</span>
                     New Chat
                 </button>
                 <div class="space-y-1 overflow-y-auto max-h-[55vh]">
@@ -602,12 +614,12 @@
                         <div class="chat-item group flex items-center gap-2"
                             :class="{ 'active': currentChatId === chat.id }"
                             @click="loadChat(chat.id); mobileMenuOpen = false">
-                            <i data-lucide="message-square" class="w-4 h-4 text-dark-muted shrink-0"></i>
+                            <span class="text-sm">💬</span>
                             <span x-text="chat.title || 'New Chat'" class="text-sm truncate flex-1"></span>
                             <button @click.stop="deleteChat(chat.id)"
                                 class="delete-btn touch-target"
                                 title="Delete chat">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                <span class="text-sm">🗑️</span>
                             </button>
                         </div>
                     </template>
@@ -615,7 +627,7 @@
                 <div class="pt-4 border-t border-dark-border/30 mt-4">
                     <button @click="showSettings = true; mobileMenuOpen = false"
                         class="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-dark-border/20 transition-colors text-sm font-medium text-dark-muted hover:text-dark-text">
-                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        <span class="text-sm">⚙️</span>
                         Settings
                     </button>
                 </div>
@@ -624,13 +636,13 @@
 
         <!-- Chat Area -->
         <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth" id="chat-container">
-            <div class="max-w-3xl mx-auto space-y-8 pb-36">
+            <div class="max-w-3xl mx-auto space-y-8 chat-content">
 
                 <!-- Welcome Screen -->
                 <div x-show="messages.length === 0"
                     class="flex flex-col items-center justify-center h-[65vh] text-center animate-fade-up">
                     <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent via-violet-500 to-fuchsia-500 flex items-center justify-center mb-6 shadow-glow-lg animate-float">
-                        <i data-lucide="sparkles" class="w-10 h-10 text-white"></i>
+                        <span class="text-3xl">✨</span>
                     </div>
                     <h1 class="font-display text-4xl md:text-5xl font-bold tracking-tight mb-4 bg-gradient-to-r from-white via-white to-zinc-400 dark:from-dark-text dark:via-dark-text dark:to-dark-muted bg-clip-text text-transparent">
                         Where knowledge begins
@@ -670,7 +682,7 @@
                                 <button @click="performDeepSearch()"
                                     x-show="!msg.deepSearchPerformed && !isLoading && msg.role === 'assistant'"
                                     class="inline-flex items-center gap-2 text-sm px-4 py-2.5 glass-card text-accent hover:text-accent-light rounded-xl font-medium">
-                                    <i data-lucide="search" class="w-4 h-4"></i>
+                                    <span class="text-sm">🔍</span>
                                     Search Deeper
                                 </button>
                             </div>
@@ -679,7 +691,7 @@
                             <div class="flex gap-4">
                                 <div class="flex-shrink-0 mt-1">
                                     <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-violet-500 flex items-center justify-center shadow-glow">
-                                        <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+                                        <span class="text-sm">✨</span>
                                     </div>
                                 </div>
                                 <div class="prose dark:prose-invert max-w-none w-full"
@@ -689,7 +701,7 @@
                             <!-- Selected Images Grid -->
                             <div x-show="msg.selectedImages && msg.selectedImages.length > 0" class="ml-10 space-y-3">
                                 <div class="text-xs text-dark-muted font-semibold flex items-center gap-1.5 uppercase tracking-wider">
-                                    <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                                    <span class="text-xs">🖼️</span>
                                     Relevant Images
                                 </div>
                                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -711,7 +723,7 @@
                             <div x-show="msg.loading"
                                 class="flex items-center gap-3 text-dark-muted ml-10">
                                 <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-violet-500 flex items-center justify-center animate-pulse-glow">
-                                    <i data-lucide="loader-2" class="w-4 h-4 text-white animate-spin"></i>
+                                    <span class="text-sm animate-spin inline-block">⏳</span>
                                 </div>
                                 <span class="text-sm font-medium" x-text="searchStatus || 'Thinking...'"></span>
                             </div>
@@ -722,9 +734,9 @@
         </div>
 
         <!-- Input Area -->
-        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-transparent via-transparent to-transparent pt-8 pb-6 px-4 z-20">
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-transparent via-transparent to-transparent pt-8 px-4 z-20 input-area">
             <div class="max-w-3xl mx-auto">
-                <div class="glass-input rounded-2xl p-3">
+                <div class="glass-input rounded-full p-3">
                     <textarea x-model="input" @keydown.enter.prevent="if(!$event.shiftKey) sendMessage()"
                         placeholder="Ask anything..."
                         class="w-full bg-transparent border-none focus:ring-0 resize-none max-h-48 min-h-[56px] p-2 text-base placeholder:text-dark-muted/60"
@@ -741,7 +753,7 @@
                                 </template>
                                 <template x-else>
                                     <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-accent/20 to-violet-500/20 flex items-center justify-center">
-                                        <i data-lucide="file-text" class="w-5 h-5 text-accent"></i>
+                                        <span class="text-lg">📄</span>
                                     </div>
                                 </template>
                                 <span class="text-xs flex-1 min-w-0 truncate font-medium" x-text="preview.name"></span>
@@ -749,7 +761,7 @@
                                     x-text="(preview.size / 1024).toFixed(1) + ' KB'"></span>
                                 <button @click="removeFile(preview.id)"
                                     class="btn-ghost text-dark-muted hover:text-red-400 p-1.5">
-                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                    <span class="text-sm">✕</span>
                                 </button>
                             </div>
                         </template>
@@ -761,7 +773,7 @@
                                 <button @click="open = !open"
                                     class="flex items-center gap-2 text-xs font-medium glass-card px-3 py-2 rounded-xl">
                                     <span x-text="focusMode"></span>
-                                    <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                                    <span class="text-xs">▼</span>
                                 </button>
                                 <div x-show="open" @click.outside="open = false"
                                     class="absolute bottom-full left-0 mb-2 w-48 glass-panel rounded-xl shadow-card overflow-hidden z-50">
@@ -776,7 +788,7 @@
                             <button type="button" @click="$refs.fileInput?.click()"
                                 class="btn-ghost touch-target text-dark-muted hover:text-accent"
                                 :title="selectedFiles.length ? (selectedFiles.length + ' file' + (selectedFiles.length > 1 ? 's' : '') + ' selected') : 'Attach files/images'">
-                                <i data-lucide="paperclip" class="w-5 h-5"></i>
+                                <span class="text-lg">📎</span>
                                 <span x-show="selectedFiles.length"
                                     class="absolute -top-1 -right-1 text-[10px] bg-accent text-white w-4 h-4 rounded-full flex items-center justify-center font-semibold"
                                     x-text="selectedFiles.length"></span>
@@ -786,8 +798,8 @@
                                 @change="handleFiles($event)" class="hidden">
                         </div>
                         <button @click="sendMessage()" :disabled="!input.trim() || isLoading"
-                            class="btn-primary p-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                            class="btn-primary p-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="text-lg">↑</span>
                         </button>
                     </div>
                 </div>
@@ -807,7 +819,7 @@
             <div class="p-5 border-b border-dark-border/30 flex items-center justify-between">
                 <h2 class="font-display font-bold text-lg">Settings</h2>
                 <button @click="showSettings = false" class="btn-ghost touch-target">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                    <span class="text-lg">✕</span>
                 </button>
             </div>
             <div class="p-6 space-y-6">
@@ -912,11 +924,6 @@
                         this.history = JSON.parse(savedHistory);
                     }
 
-                    // Initialize Icons
-                    this.$nextTick(() => {
-                        lucide.createIcons();
-                    });
-
                     // Start new chat if empty
                     if (this.history.length === 0) {
                         this.startNewChat();
@@ -980,9 +987,6 @@
                     this.currentChatId = newChat.id;
                     this.messages = [];
                     this.saveHistory();
-                    this.$nextTick(() => {
-                        lucide.createIcons();
-                    });
                 },
                 loadChat(id) {
                     const chat = this.history.find(c => c.id === id);
